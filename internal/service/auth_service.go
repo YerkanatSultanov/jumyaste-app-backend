@@ -1,12 +1,10 @@
 package service
 
 import (
-	"crypto/rand"
-	"encoding/base64"
+	"context"
 	"errors"
 	"fmt"
-	"github.com/golang-jwt/jwt/v4"
-	"jumyste-app-backend/config"
+	"github.com/redis/go-redis/v9"
 	"jumyste-app-backend/internal/entity"
 	"jumyste-app-backend/internal/repository"
 	"jumyste-app-backend/pkg/logger"
@@ -17,62 +15,64 @@ import (
 )
 
 type AuthService struct {
-	repo      *repository.AuthRepository
-	JWTSecret string
+	repo  *repository.AuthRepository
+	redis *redis.Client
 }
 
-func NewAuthService(repo *repository.AuthRepository) *AuthService {
-	return &AuthService{
-		repo:      repo,
-		JWTSecret: config.AppConfig.JWT.Secret,
-	}
+func NewAuthService(repo *repository.AuthRepository, redisClient *redis.Client) *AuthService {
+	return &AuthService{repo: repo, redis: redisClient}
 }
 
-func (s *AuthService) RegisterUser(email, password, firstName, lastName string) error {
-	logger.Log.Info("Starting user registration",
-		slog.String("email", email),
-		slog.String("Name", firstName))
+var (
+	ErrInvalidResetCode = errors.New("invalid or expired reset code")
+	ErrUserNotFound     = errors.New("user not found")
+)
 
-	exists, err := s.repo.UserExistsByEmail(email)
-	if err != nil {
-		logger.Log.Error("Error checking user existence",
-			slog.String("email", email),
-			slog.String("error", err.Error()))
-		return err
-	}
-	if exists {
-		logger.Log.Warn("Registration attempt for existing user",
-			slog.String("email", email))
-		return errors.New("user with this email already exists")
-	}
-
-	hashedPassword, err := utils.HashPassword(password)
-	if err != nil {
-		logger.Log.Error("Failed to hash password", slog.String("error", err.Error()))
-		return err
-	}
-
-	user := &entity.User{
-		Email:     email,
-		FirstName: firstName,
-		LastName:  lastName,
-		Password:  hashedPassword,
-	}
-
-	err = s.repo.CreateUser(user)
-	if err != nil {
-		logger.Log.Error("Failed to create user",
-			slog.String("email", email),
-			slog.String("error", err.Error()))
-		return err
-	}
-
-	logger.Log.Info("User registered successfully",
-		slog.String("email", email),
-		slog.String("name", firstName))
-
-	return nil
-}
+//func (s *AuthService) RegisterUser(email, password, firstName, lastName string) error {
+//	logger.Log.Info("Starting user registration",
+//		slog.String("email", email),
+//		slog.String("Name", firstName))
+//
+//	exists, err := s.repo.UserExistsByEmail(email)
+//	if err != nil {
+//		logger.Log.Error("Error checking user existence",
+//			slog.String("email", email),
+//			slog.String("error", err.Error()))
+//		return err
+//	}
+//	if exists {
+//		logger.Log.Warn("Registration attempt for existing user",
+//			slog.String("email", email))
+//		return errors.New("user with this email already exists")
+//	}
+//
+//	hashedPassword, err := utils.HashPassword(password)
+//	if err != nil {
+//		logger.Log.Error("Failed to hash password", slog.String("error", err.Error()))
+//		return err
+//	}
+//
+//	user := &entity.User{
+//		Email:     email,
+//		FirstName: firstName,
+//		LastName:  lastName,
+//		Password:  hashedPassword,
+//	}
+//
+//	err = s.repo.CreateUser(user)
+//	if err != nil {
+//		logger.Log.Error("Failed to create user",
+//			slog.String("email", email),
+//			slog.String("error", err.Error()))
+//		return err
+//	}
+//
+//	logger.Log.Info("User registered successfully",
+//		slog.String("email", email),
+//		slog.String("name", firstName))
+//
+//	return nil
+//}
 
 func (s *AuthService) LoginUser(email, password string) (string, error) {
 	logger.Log.Info("Attempting user login", slog.String("email", email))
@@ -102,84 +102,170 @@ func (s *AuthService) LoginUser(email, password string) (string, error) {
 	return token, nil
 }
 
-func (s *AuthService) VerifyToken(tokenString string) (int, error) {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errors.New("unexpected signing method")
-		}
-		return []byte(s.JWTSecret), nil
-	})
-
-	if err != nil || !token.Valid {
-		return 0, errors.New("invalid token")
-	}
-
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok {
-		return 0, errors.New("invalid token claims")
-	}
-
-	exp, ok := claims["exp"].(float64)
-	if !ok || time.Now().Unix() > int64(exp) {
-		return 0, errors.New("token expired")
-	}
-
-	userID, ok := claims["user_id"].(float64)
-	if !ok {
-		return 0, errors.New("missing user_id")
-	}
-
-	return int(userID), nil
-}
-
-func generateToken() string {
-	b := make([]byte, 32)
-	rand.Read(b)
-	return base64.URLEncoding.EncodeToString(b)
-}
-
-// RequestPasswordReset генерирует токен и отправляет письмо
 func (s *AuthService) RequestPasswordReset(email string) error {
+	logger.Log.Info("Processing password reset request", slog.String("email", email))
+
 	user, err := s.repo.GetUserByEmail(email)
 	if err != nil {
-		return errors.New("пользователь не найден")
+		logger.Log.Warn("User not found", slog.String("email", email))
+		return ErrUserNotFound
 	}
 
-	token := generateToken()
-	expiration := time.Now().Add(1 * time.Hour)
+	resetCode := utils.GenerateResetCode()
+	expiresAt := time.Now().Add(10 * time.Minute)
 
-	if err := s.repo.SavePasswordResetToken(user.ID, token, expiration); err != nil {
-		return err
+	err = s.repo.SavePasswordResetCode(user.ID, resetCode, expiresAt)
+	if err != nil {
+		logger.Log.Error("Failed to save reset code", slog.String("email", email), slog.String("error", err.Error()))
+		return fmt.Errorf("failed to save reset code")
 	}
 
-	resetLink := fmt.Sprintf("http://localhost:3000/reset-password?token=%s", token)
+	subject := "Password Reset Code"
+	body := fmt.Sprintf("Your password reset code is: %s", resetCode)
 
-	emailBody := fmt.Sprintf("Для сброса пароля перейдите по ссылке: %s", resetLink)
-	if err := mail.SendEmail(user.Email, "Сброс пароля", emailBody); err != nil {
-		return err
+	err = mail.SendEmail(email, subject, body)
+	if err != nil {
+		logger.Log.Error("Failed to send reset email", slog.String("email", email), slog.String("error", err.Error()))
+		return fmt.Errorf("failed to send reset email")
 	}
 
+	logger.Log.Info("Password reset email sent", slog.String("email", email))
 	return nil
 }
 
-func (s *AuthService) ResetPassword(token, newPassword string) error {
-	user, err := s.repo.GetUserByResetToken(token)
+func (s *AuthService) ResetPassword(email, resetCode, newPassword, confirmPassword string) error {
+	logger.Log.Info("Verifying password reset request", slog.String("email", email))
+
+	if newPassword != confirmPassword {
+		logger.Log.Warn("Password confirmation does not match", slog.String("email", email))
+		return fmt.Errorf("passwords do not match")
+	}
+
+	user, err := s.repo.GetUserByEmail(email)
 	if err != nil {
-		return errors.New("неверный или истекший токен")
+		logger.Log.Warn("User not found", slog.String("email", email))
+		return fmt.Errorf("user not found")
+	}
+
+	savedCode, expiresAt, err := s.repo.GetPasswordResetCode(user.ID)
+	if err != nil {
+		logger.Log.Warn("Invalid or expired reset code", slog.String("email", email))
+		return fmt.Errorf("invalid or expired reset code")
+	}
+
+	if resetCode != savedCode {
+		logger.Log.Warn("Incorrect reset code", slog.String("email", email))
+		return fmt.Errorf("incorrect reset code")
+	}
+
+	if time.Now().After(expiresAt) {
+		logger.Log.Warn("Reset code expired", slog.String("email", email))
+		return fmt.Errorf("reset code expired")
 	}
 
 	hashedPassword, err := utils.HashPassword(newPassword)
 	if err != nil {
-		return errors.New("ошибка хеширования пароля")
+		logger.Log.Error("Failed to hash new password", slog.String("email", email), slog.String("error", err.Error()))
+		return fmt.Errorf("failed to hash new password")
 	}
 
-	if err := s.repo.UpdateUserPassword(user.ID, hashedPassword); err != nil {
+	err = s.repo.UpdateUserPassword(user.ID, hashedPassword)
+	if err != nil {
+		logger.Log.Error("Failed to update password", slog.String("email", email), slog.String("error", err.Error()))
+		return fmt.Errorf("failed to update password")
+	}
+
+	_ = s.repo.DeletePasswordResetCode(user.ID)
+
+	logger.Log.Info("Password reset successfully", slog.String("email", email))
+	return nil
+}
+
+func (s *AuthService) RegisterUser(email, password, firstName, lastName string) error {
+	logger.Log.Info("Registering user and sending verification code", slog.String("email", email))
+
+	exists, err := s.repo.UserExistsByEmail(email)
+	if err != nil {
+		logger.Log.Error("Error checking user existence", slog.String("email", email), slog.String("error", err.Error()))
+		return err
+	}
+	if exists {
+		return errors.New("user with this email already exists")
+	}
+
+	verificationCode := utils.GenerateResetCode()
+
+	hashedPassword, err := utils.HashPassword(password)
+	if err != nil {
+		logger.Log.Error("Failed to hash password", slog.String("error", err.Error()))
 		return err
 	}
 
-	if err := s.repo.DeletePasswordResetToken(token); err != nil {
+	ctx := context.Background()
+	key := fmt.Sprintf("pending_registration:%s", email)
+	userData := map[string]interface{}{
+		"email":     email,
+		"password":  hashedPassword,
+		"firstName": firstName,
+		"lastName":  lastName,
+		"code":      verificationCode,
+	}
+	err = s.redis.HMSet(ctx, key, userData).Err()
+	if err != nil {
+		logger.Log.Error("Failed to save user data in Redis", slog.String("email", email), slog.String("error", err.Error()))
+		return errors.New("failed to save user data")
+	}
+
+	s.redis.Expire(ctx, key, 10*time.Minute)
+
+	go func() {
+		subject := "Verification Code"
+		body := fmt.Sprintf("Your verification code is: %s", verificationCode)
+
+		err := mail.SendEmail(email, subject, body)
+		if err != nil {
+			logger.Log.Error("Failed to send verification email", slog.String("email", email), slog.String("error", err.Error()))
+		} else {
+			logger.Log.Debug("Verification code sent successfully", slog.String("email", email))
+		}
+	}()
+
+	logger.Log.Info("User registration process started", slog.String("email", email))
+
+	return nil
+}
+
+func (s *AuthService) VerifyCodeAndRegister(email, code string) error {
+	ctx := context.Background()
+	key := fmt.Sprintf("pending_registration:%s", email)
+
+	userData, err := s.redis.HGetAll(ctx, key).Result()
+	if err != nil {
+		return errors.New("failed to get registration data")
+	}
+	if len(userData) == 0 {
+		return errors.New("registration data expired or not found")
+	}
+
+	if userData["code"] != code {
+		return errors.New("invalid verification code")
+	}
+
+	user := &entity.User{
+		Email:     userData["email"],
+		Password:  userData["password"],
+		FirstName: userData["firstName"],
+		LastName:  userData["lastName"],
+	}
+
+	err = s.repo.CreateUser(user)
+	if err != nil {
+		logger.Log.Error("Failed to create user", slog.String("email", email), slog.String("error", err.Error()))
 		return err
 	}
 
+	s.redis.Del(ctx, key)
+
+	logger.Log.Info("User registered successfully", slog.String("email", email))
 	return nil
 }

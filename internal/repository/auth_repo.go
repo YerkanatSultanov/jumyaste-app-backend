@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"github.com/redis/go-redis/v9"
 	"jumyste-app-backend/internal/entity"
 	"jumyste-app-backend/pkg/logger"
 	"log/slog"
@@ -9,11 +10,12 @@ import (
 )
 
 type AuthRepository struct {
-	db *sql.DB
+	db    *sql.DB
+	redis *redis.Client
 }
 
-func NewAuthRepository(db *sql.DB) *AuthRepository {
-	return &AuthRepository{db: db}
+func NewAuthRepository(db *sql.DB, redisClient *redis.Client) *AuthRepository {
+	return &AuthRepository{db: db, redis: redisClient}
 }
 
 func (r *AuthRepository) UserExistsByEmail(email string) (bool, error) {
@@ -71,34 +73,37 @@ func (r *AuthRepository) GetUserByEmail(email string) (*entity.User, error) {
 	return &user, nil
 }
 
-func (r *AuthRepository) SavePasswordResetToken(userID int, token string, expiration time.Time) error {
-	_, err := r.db.Exec(
-		"INSERT INTO password_resets(user_id, token, expires_at) VALUES ($1, $2, $3)",
-		userID, token, expiration,
-	)
-	return err
-}
-
-func (r *AuthRepository) GetUserByResetToken(token string) (*entity.User, error) {
-	var user entity.User
-	query := `
-		SELECT u.id, u.email, u.password 
-		FROM users u
-		JOIN password_resets pr ON u.id = pr.user_id
-		WHERE pr.token = $1 AND pr.expires_at > NOW()`
-	err := r.db.QueryRow(query, token).Scan(&user.ID, &user.Email, &user.Password)
-	if err != nil {
-		return nil, err
-	}
-	return &user, nil
-}
-
 func (r *AuthRepository) UpdateUserPassword(userID int, hashedPassword string) error {
 	_, err := r.db.Exec("UPDATE users SET password = $1 WHERE id = $2", hashedPassword, userID)
 	return err
 }
 
-func (r *AuthRepository) DeletePasswordResetToken(token string) error {
-	_, err := r.db.Exec("DELETE FROM password_resets WHERE token = $1", token)
+func (r *AuthRepository) SavePasswordResetCode(userID int, resetCode string, expiresAt time.Time) error {
+	_, _ = r.db.Exec("DELETE FROM password_resets WHERE user_id = $1", userID)
+
+	query := `
+		INSERT INTO password_resets(user_id, reset_code, expires_at) 
+		VALUES ($1, $2, $3);
+	`
+	_, err := r.db.Exec(query, userID, resetCode, expiresAt)
+	return err
+}
+
+func (r *AuthRepository) GetPasswordResetCode(userID int) (string, time.Time, error) {
+	var resetCode string
+	var expiresAt time.Time
+
+	query := `SELECT reset_code, expires_at FROM password_resets WHERE user_id = $1`
+	err := r.db.QueryRow(query, userID).Scan(&resetCode, &expiresAt)
+	if err != nil {
+		return "", time.Time{}, err
+	}
+
+	return resetCode, expiresAt, nil
+}
+
+func (r *AuthRepository) DeletePasswordResetCode(userID int) error {
+	query := `DELETE FROM password_resets WHERE user_id = $1`
+	_, err := r.db.Exec(query, userID)
 	return err
 }

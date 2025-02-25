@@ -12,8 +12,18 @@ CREATE TABLE IF NOT EXISTS users
 CREATE TABLE password_resets
 (
     id         SERIAL PRIMARY KEY,
-    user_id    INTEGER   NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-    token      VARCHAR   NOT NULL UNIQUE,
-    expires_at TIMESTAMP NOT NULL,
+    user_id    INTEGER    NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    reset_code VARCHAR(6) NOT NULL,
+    expires_at TIMESTAMP  NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE email_verifications
+(
+    id                SERIAL PRIMARY KEY,
+    email             VARCHAR(200) NOT NULL UNIQUE,
+    verification_code VARCHAR(6)   NOT NULL,
+    expires_at        TIMESTAMP    NOT NULL,
+    created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+

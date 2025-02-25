@@ -3,19 +3,19 @@ package middleware
 import (
 	"errors"
 	"github.com/golang-jwt/jwt/v5"
+	"jumyste-app-backend/config"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"jumyste-app-backend/config"
 )
 
 type AuthMiddleware struct {
 	secretKey string
 }
 
-func NewAuthMiddleware(cfg *config.Config) *AuthMiddleware {
+func NewAuthMiddleware(cfg config.Config) *AuthMiddleware {
 	return &AuthMiddleware{secretKey: cfg.JWT.Secret}
 }
 

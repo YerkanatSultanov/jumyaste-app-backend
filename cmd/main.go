@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"jumyste-app-backend/config"
+	main2 "jumyste-app-backend/config"
 	"jumyste-app-backend/internal/applicator"
 	"jumyste-app-backend/internal/middleware"
 	"jumyste-app-backend/internal/router"
@@ -12,17 +12,17 @@ import (
 func main() {
 	logger.InitLogger()
 
-	config.LoadConfig("config/config.yaml")
+	main2.LoadConfig()
 
 	logger.Log.Info("Starting application...")
 	app := applicator.NewApp()
 
-	auth := middleware.NewAuthMiddleware(config.AppConfig)
+	auth := middleware.NewAuthMiddleware(main2.AppConfig)
 
 	r := router.SetupRouter(app.AuthHandler, app.UserHandler, auth)
 
-	serverPort := config.AppConfig.Server.Port
-	addr := fmt.Sprintf(":%d", serverPort)
+	serverPort := main2.AppConfig.Server.Port
+	addr := fmt.Sprintf(":%s", serverPort)
 	logger.Log.Info("Starting server", "port", serverPort)
 
 	if err := r.Run(addr); err != nil {

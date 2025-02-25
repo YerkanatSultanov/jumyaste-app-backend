@@ -10,12 +10,13 @@ import (
 	"jumyste-app-backend/config"
 	"jumyste-app-backend/pkg/logger"
 	"log/slog"
+	"path/filepath"
 )
 
 func RunMigrations() {
 	dbConfig := config.AppConfig.Database
 	dsn := fmt.Sprintf(
-		"postgres://%s:%s@%s:%d/%s?sslmode=%s",
+		"postgres://%s:%s@%s:%s/%s?sslmode=%s",
 		dbConfig.User, dbConfig.Password, dbConfig.Host, dbConfig.Port, dbConfig.DBName, dbConfig.SSLMode,
 	)
 
@@ -34,10 +35,10 @@ func RunMigrations() {
 		return
 	}
 
-	migrationsPath := "file://./migrations"
+	migrationsPath, _ := filepath.Abs("./migrations")
+	migrationsPath = "file://" + migrationsPath
 
 	m, err := migrate.NewWithDatabaseInstance(migrationsPath, "postgres", driver)
-
 	if err != nil {
 		logger.Log.Error("Failed to create migration instance",
 			slog.String("error", err.Error()))

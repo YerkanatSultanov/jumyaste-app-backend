@@ -6,6 +6,9 @@ import (
 	"jumyste-app-backend/internal/repository"
 	"jumyste-app-backend/internal/service"
 	"jumyste-app-backend/pkg/logger"
+	"jumyste-app-backend/pkg/redisPkg"
+
+	"github.com/redis/go-redis/v9"
 )
 
 type App struct {
@@ -15,6 +18,7 @@ type App struct {
 	UserService *service.UserService
 	AuthHandler *handler.AuthHandler
 	UserHandler *handler.UserHandler
+	RedisClient *redis.Client
 }
 
 func NewApp() *App {
@@ -22,12 +26,15 @@ func NewApp() *App {
 	database.InitDB()
 	database.RunMigrations()
 
+	logger.Log.Info("Initializing Redis...")
+	redisClient := redisPkg.InitRedis()
+
 	logger.Log.Info("Initializing repositories...")
-	authRepo := repository.NewAuthRepository(database.DB)
+	authRepo := repository.NewAuthRepository(database.DB, redisClient)
 	userRepo := repository.NewUserRepository(database.DB)
 
 	logger.Log.Info("Initializing services...")
-	authService := service.NewAuthService(authRepo)
+	authService := service.NewAuthService(authRepo, redisClient)
 	userService := service.NewUserService(userRepo)
 
 	logger.Log.Info("Initializing handlers...")
@@ -43,5 +50,6 @@ func NewApp() *App {
 		UserService: userService,
 		AuthHandler: authHandler,
 		UserHandler: userHandler,
+		RedisClient: redisClient,
 	}
 }
