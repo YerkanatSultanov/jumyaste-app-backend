@@ -48,17 +48,17 @@ func LoadConfig() {
 		log.Println("No .env file found, loading from environment")
 	}
 
-	AppConfig = Config{ // 👈 Теперь `AppConfig` доступен глобально
+	AppConfig = Config{
 		Server: ServerConfig{
 			Port: getEnv("SERVER_PORT", "8080"),
 		},
 		Database: DatabaseConfig{
-			Host:     getEnv("DB_HOST", "localhost"),
-			Port:     getEnv("DB_PORT", "5432"),
+			Host:     getEnv("DB_HOST", "trolley.proxy.rlwy.net"),
+			Port:     getEnv("DB_PORT", "35282"),
 			User:     getEnv("DB_USER", "postgres"),
-			Password: getEnv("DB_PASSWORD", "postgres"),
-			DBName:   getEnv("DB_NAME", "jumyste-app-db"),
-			SSLMode:  getEnv("DB_SSLMODE", "disable"),
+			Password: getEnv("DB_PASSWORD", "SXiJlyYzsIMXgeoMLkaYdnfidyuaitPN"),
+			DBName:   getEnv("DB_NAME", "railway"),
+			SSLMode:  getEnv("DB_SSLMODE", "require"),
 		},
 		JWT: JWTConfig{
 			Secret:          getEnv("JWT_SECRET", "secretkey"),

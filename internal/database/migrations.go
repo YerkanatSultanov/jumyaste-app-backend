@@ -38,7 +38,7 @@ func RunMigrations() {
 	migrationsPath, _ := filepath.Abs("./migrations")
 	migrationsPath = "file://" + migrationsPath
 
-	m, err := migrate.NewWithDatabaseInstance(migrationsPath, "postgres", driver)
+	m, err := migrate.NewWithDatabaseInstance(migrationsPath, "railway", driver)
 	if err != nil {
 		logger.Log.Error("Failed to create migration instance",
 			slog.String("error", err.Error()))
