@@ -1,7 +1,6 @@
 package service
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"github.com/redis/go-redis/v9"
@@ -193,69 +192,18 @@ func (s *AuthService) RegisterUser(email, password, firstName, lastName string) 
 		return errors.New("user with this email already exists")
 	}
 
-	verificationCode := utils.GenerateResetCode()
+	//verificationCode := utils.GenerateResetCode()
 
 	hashedPassword, err := utils.HashPassword(password)
 	if err != nil {
 		logger.Log.Error("Failed to hash password", slog.String("error", err.Error()))
 		return err
 	}
-
-	ctx := context.Background()
-	key := fmt.Sprintf("pending_registration:%s", email)
-	userData := map[string]interface{}{
-		"email":     email,
-		"password":  hashedPassword,
-		"firstName": firstName,
-		"lastName":  lastName,
-		"code":      verificationCode,
-	}
-	err = s.redis.HMSet(ctx, key, userData).Err()
-	if err != nil {
-		logger.Log.Error("Failed to save user data in Redis", slog.String("email", email), slog.String("error", err.Error()))
-		return errors.New("failed to save user data")
-	}
-
-	s.redis.Expire(ctx, key, 10*time.Minute)
-
-	go func() {
-		subject := "Verification Code"
-		body := fmt.Sprintf("Your verification code is: %s", verificationCode)
-
-		err := mail.SendEmail(email, subject, body)
-		if err != nil {
-			logger.Log.Error("Failed to send verification email", slog.String("email", email), slog.String("error", err.Error()))
-		} else {
-			logger.Log.Debug("Verification code sent successfully", slog.String("email", email))
-		}
-	}()
-
-	logger.Log.Info("User registration process started", slog.String("email", email))
-
-	return nil
-}
-
-func (s *AuthService) VerifyCodeAndRegister(email, code string) error {
-	ctx := context.Background()
-	key := fmt.Sprintf("pending_registration:%s", email)
-
-	userData, err := s.redis.HGetAll(ctx, key).Result()
-	if err != nil {
-		return errors.New("failed to get registration data")
-	}
-	if len(userData) == 0 {
-		return errors.New("registration data expired or not found")
-	}
-
-	if userData["code"] != code {
-		return errors.New("invalid verification code")
-	}
-
 	user := &entity.User{
-		Email:     userData["email"],
-		Password:  userData["password"],
-		FirstName: userData["firstName"],
-		LastName:  userData["lastName"],
+		Email:     email,
+		Password:  hashedPassword,
+		FirstName: firstName,
+		LastName:  lastName,
 	}
 
 	err = s.repo.CreateUser(user)
@@ -263,9 +211,72 @@ func (s *AuthService) VerifyCodeAndRegister(email, code string) error {
 		logger.Log.Error("Failed to create user", slog.String("email", email), slog.String("error", err.Error()))
 		return err
 	}
-
-	s.redis.Del(ctx, key)
-
 	logger.Log.Info("User registered successfully", slog.String("email", email))
+
+	//ctx := context.Background()
+	//key := fmt.Sprintf("pending_registration:%s", email)
+	//userData := map[string]interface{}{
+	//	"email":     email,
+	//	"password":  hashedPassword,
+	//	"firstName": firstName,
+	//	"lastName":  lastName,
+	//}
+	//err = s.redis.HMSet(ctx, key, userData).Err()
+	//if err != nil {
+	//	logger.Log.Error("Failed to save user data in Redis", slog.String("email", email), slog.String("error", err.Error()))
+	//	return errors.New("failed to save user data")
+	//}
+	//
+	//s.redis.Expire(ctx, key, 10*time.Minute)
+	//
+	//go func() {
+	//	subject := "Verification Code"
+	//	body := fmt.Sprintf("Your verification code is: %s", verificationCode)
+	//
+	//	err := mail.SendEmail(email, subject, body)
+	//	if err != nil {
+	//		logger.Log.Error("Failed to send verification email", slog.String("email", email), slog.String("error", err.Error()))
+	//	} else {
+	//		logger.Log.Debug("Verification code sent successfully", slog.String("email", email))
+	//	}
+	//}()
+	//
+	//logger.Log.Info("User registration process started", slog.String("email", email))
+
 	return nil
 }
+
+//func (s *AuthService) VerifyCodeAndRegister(email, code string) error {
+//	ctx := context.Background()
+//	key := fmt.Sprintf("pending_registration:%s", email)
+//
+//	userData, err := s.redis.HGetAll(ctx, key).Result()
+//	if err != nil {
+//		return errors.New("failed to get registration data")
+//	}
+//	if len(userData) == 0 {
+//		return errors.New("registration data expired or not found")
+//	}
+//
+//	if userData["code"] != code {
+//		return errors.New("invalid verification code")
+//	}
+//
+//	user := &entity.User{
+//		Email:     userData["email"],
+//		Password:  userData["password"],
+//		FirstName: userData["firstName"],
+//		LastName:  userData["lastName"],
+//	}
+//
+//	err = s.repo.CreateUser(user)
+//	if err != nil {
+//		logger.Log.Error("Failed to create user", slog.String("email", email), slog.String("error", err.Error()))
+//		return err
+//	}
+//
+//	s.redis.Del(ctx, key)
+//
+//	logger.Log.Info("User registered successfully", slog.String("email", email))
+//	return nil
+//}
