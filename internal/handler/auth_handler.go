@@ -131,24 +131,24 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Verification code sent"})
+	c.JSON(http.StatusOK, gin.H{"message": "User registered successfully"})
 }
 
-func (h *AuthHandler) VerifyCodeAndRegister(c *gin.Context) {
-	var request struct {
-		Email string `json:"email"`
-		Code  string `json:"code"`
-	}
-
-	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
-		return
-	}
-
-	if err := h.AuthService.VerifyCodeAndRegister(request.Email, request.Code); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusCreated, gin.H{"message": "User registered successfully"})
-}
+//func (h *AuthHandler) VerifyCodeAndRegister(c *gin.Context) {
+//	var request struct {
+//		Email string `json:"email"`
+//		Code  string `json:"code"`
+//	}
+//
+//	if err := c.ShouldBindJSON(&request); err != nil {
+//		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+//		return
+//	}
+//
+//	if err := h.AuthService.VerifyCodeAndRegister(request.Email, request.Code); err != nil {
+//		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+//		return
+//	}
+//
+//	c.JSON(http.StatusCreated, gin.H{"message": "User registered successfully"})
+//}

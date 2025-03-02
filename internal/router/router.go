@@ -13,7 +13,7 @@ func SetupRouter(authHandler *handler.AuthHandler, userHandler *handler.UserHand
 	auth := r.Group("/api/auth")
 	{
 		auth.POST("/register", authHandler.Register)
-		auth.POST("/verify-code", authHandler.VerifyCodeAndRegister)
+		//auth.POST("/verify-code", authHandler.VerifyCodeAndRegister)
 		auth.POST("/login", authHandler.Login)
 		auth.POST("/forgot-password", authHandler.RequestPasswordReset)
 		auth.POST("/reset-password", authHandler.ResetPassword)

@@ -48,7 +48,7 @@ func LoadConfig() {
 		log.Println("No .env file found, loading from environment")
 	}
 
-	AppConfig = Config{ // 👈 Теперь `AppConfig` доступен глобально
+	AppConfig = Config{
 		Server: ServerConfig{
 			Port: getEnv("SERVER_PORT", "8080"),
 		},
