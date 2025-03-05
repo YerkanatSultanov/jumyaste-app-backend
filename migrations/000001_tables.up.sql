@@ -6,8 +6,11 @@ CREATE TABLE IF NOT EXISTS users
     first_name      VARCHAR(100) NOT NULL,
     last_name       VARCHAR(100) NOT NULL,
     profile_picture VARCHAR      NULL,
-    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    role_id         INTEGER NOT NULL,
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_users_roles FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE RESTRICT
 );
+
 
 CREATE TABLE password_resets
 (
@@ -18,12 +21,8 @@ CREATE TABLE password_resets
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE email_verifications
+CREATE TABLE IF NOT EXISTS roles
 (
-    id                SERIAL PRIMARY KEY,
-    email             VARCHAR(200) NOT NULL UNIQUE,
-    verification_code VARCHAR(6)   NOT NULL,
-    expires_at        TIMESTAMP    NOT NULL,
-    created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    id        SERIAL PRIMARY KEY,
+    role_name VARCHAR(100) NOT NULL UNIQUE
 );
-
