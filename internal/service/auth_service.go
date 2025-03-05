@@ -18,8 +18,8 @@ type AuthService struct {
 	redis *redis.Client
 }
 
-func NewAuthService(repo *repository.AuthRepository, redisClient *redis.Client) *AuthService {
-	return &AuthService{repo: repo, redis: redisClient}
+func NewAuthService(repo *repository.AuthRepository) *AuthService {
+	return &AuthService{repo: repo}
 }
 
 var (
@@ -81,23 +81,19 @@ func (s *AuthService) LoginUser(email, password string) (string, error) {
 		logger.Log.Warn("Login failed: user not found", slog.String("email", email))
 		return "", errors.New("invalid credentials")
 	}
-	logger.Log.Info("Comparing passwords",
-		slog.String("input_password", password),
-		slog.String("hashed_password", user.Password))
 
 	if !utils.CheckPassword(password, user.Password) {
 		logger.Log.Warn("Login failed: incorrect password", slog.String("email", email))
 		return "", errors.New("invalid credentials")
 	}
 
-	token, err := utils.GenerateJWT(user.ID)
+	token, err := utils.GenerateJWT(user.ID, user.RoleID)
 	if err != nil {
 		logger.Log.Error("Failed to generate JWT", slog.String("error", err.Error()))
 		return "", err
 	}
 
 	logger.Log.Info("User logged in successfully", slog.String("email", email))
-
 	return token, nil
 }
 

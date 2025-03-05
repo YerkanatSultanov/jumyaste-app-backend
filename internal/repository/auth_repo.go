@@ -14,8 +14,8 @@ type AuthRepository struct {
 	redis *redis.Client
 }
 
-func NewAuthRepository(db *sql.DB, redisClient *redis.Client) *AuthRepository {
-	return &AuthRepository{db: db, redis: redisClient}
+func NewAuthRepository(db *sql.DB) *AuthRepository {
+	return &AuthRepository{db: db}
 }
 
 func (r *AuthRepository) UserExistsByEmail(email string) (bool, error) {
@@ -60,8 +60,8 @@ func (r *AuthRepository) GetUserByEmail(email string) (*entity.User, error) {
 	logger.Log.Info("Fetching user by email", slog.String("email", email))
 
 	var user entity.User
-	query := "SELECT id, email, password, first_name, last_name, profile_picture  FROM users WHERE email = $1"
-	err := r.db.QueryRow(query, email).Scan(&user.ID, &user.Email, &user.Password, &user.FirstName, &user.LastName, &user.ProfilePicture)
+	query := "SELECT id, email, password, first_name, last_name, profile_picture, role_id FROM users WHERE email = $1"
+	err := r.db.QueryRow(query, email).Scan(&user.ID, &user.Email, &user.Password, &user.FirstName, &user.LastName, &user.ProfilePicture, &user.RoleID)
 	if err != nil {
 		logger.Log.Error("User not found",
 			slog.String("email", email),

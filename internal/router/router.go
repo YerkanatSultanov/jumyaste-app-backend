@@ -6,7 +6,7 @@ import (
 	"jumyste-app-backend/internal/middleware"
 )
 
-func SetupRouter(authHandler *handler.AuthHandler, userHandler *handler.UserHandler, authMiddleware *middleware.AuthMiddleware) *gin.Engine {
+func SetupRouter(authHandler *handler.AuthHandler, userHandler *handler.UserHandler, vacancyHandler *handler.VacancyHandler, authMiddleware *middleware.AuthMiddleware) *gin.Engine {
 	r := gin.Default()
 	r.Use(middleware.CORSMiddleware())
 
@@ -23,9 +23,18 @@ func SetupRouter(authHandler *handler.AuthHandler, userHandler *handler.UserHand
 	protected.Use(authMiddleware.VerifyTokenMiddleware())
 
 	{
-		protected.GET("/me", userHandler.GetUser)
+		protected.GET("/me", middleware.RequireRole(3), userHandler.GetUser)
 		protected.PATCH("/me", userHandler.UpdateUser)
 		// users.DELETE("/me", userHandler.DeleteUser)
+	}
+
+	vacancyRoutes := r.Group("/api/vacancies")
+	vacancyRoutes.Use(middleware.RequireRole(2))
+	{
+		vacancyRoutes.POST("/", vacancyHandler.CreateVacancy)
+		vacancyRoutes.PUT("/:id", vacancyHandler.UpdateVacancy)
+		vacancyRoutes.DELETE("/:id", vacancyHandler.DeleteVacancy)
+		vacancyRoutes.GET("/", vacancyHandler.GetAllVacancies)
 	}
 
 	return r
