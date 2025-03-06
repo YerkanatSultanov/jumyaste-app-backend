@@ -23,7 +23,7 @@ func SetupRouter(authHandler *handler.AuthHandler, userHandler *handler.UserHand
 	protected.Use(authMiddleware.VerifyTokenMiddleware())
 
 	{
-		protected.GET("/me", middleware.RequireRole(3), userHandler.GetUser)
+		protected.GET("/me", userHandler.GetUser)
 		protected.PATCH("/me", userHandler.UpdateUser)
 		// users.DELETE("/me", userHandler.DeleteUser)
 	}
