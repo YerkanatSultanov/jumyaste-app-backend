@@ -3,6 +3,7 @@ package handler
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
+	"jumyste-app-backend/internal/entity"
 	"jumyste-app-backend/internal/service"
 	"jumyste-app-backend/pkg/logger"
 	"log/slog"
@@ -119,14 +120,26 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		Password  string `json:"password"`
 		FirstName string `json:"first_name"`
 		LastName  string `json:"last_name"`
+		RoleId    int    `json:"role_id"`
 	}
 
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
+	if request.RoleId == 0 {
+		request.RoleId = 3
+	}
 
-	if err := h.AuthService.RegisterUser(request.Email, request.Password, request.FirstName, request.LastName); err != nil {
+	user := &entity.User{
+		Email:     request.Email,
+		Password:  request.Password,
+		FirstName: request.FirstName,
+		LastName:  request.LastName,
+		RoleID:    request.RoleId,
+	}
+
+	if err := h.AuthService.RegisterUser(user); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

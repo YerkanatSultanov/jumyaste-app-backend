@@ -176,12 +176,12 @@ func (s *AuthService) ResetPassword(email, resetCode, newPassword, confirmPasswo
 	return nil
 }
 
-func (s *AuthService) RegisterUser(email, password, firstName, lastName string) error {
-	logger.Log.Info("Registering user and sending verification code", slog.String("email", email))
+func (s *AuthService) RegisterUser(userReq *entity.User) error {
+	logger.Log.Info("Registering user and sending verification code", slog.String("email", userReq.Email))
 
-	exists, err := s.repo.UserExistsByEmail(email)
+	exists, err := s.repo.UserExistsByEmail(userReq.Email)
 	if err != nil {
-		logger.Log.Error("Error checking user existence", slog.String("email", email), slog.String("error", err.Error()))
+		logger.Log.Error("Error checking user existence", slog.String("email", userReq.Email), slog.String("error", err.Error()))
 		return err
 	}
 	if exists {
@@ -190,24 +190,25 @@ func (s *AuthService) RegisterUser(email, password, firstName, lastName string) 
 
 	//verificationCode := utils.GenerateResetCode()
 
-	hashedPassword, err := utils.HashPassword(password)
+	hashedPassword, err := utils.HashPassword(userReq.Password)
 	if err != nil {
 		logger.Log.Error("Failed to hash password", slog.String("error", err.Error()))
 		return err
 	}
 	user := &entity.User{
-		Email:     email,
+		Email:     userReq.Email,
 		Password:  hashedPassword,
-		FirstName: firstName,
-		LastName:  lastName,
+		FirstName: userReq.FirstName,
+		LastName:  userReq.LastName,
+		RoleID:    userReq.RoleID,
 	}
 
 	err = s.repo.CreateUser(user)
 	if err != nil {
-		logger.Log.Error("Failed to create user", slog.String("email", email), slog.String("error", err.Error()))
+		logger.Log.Error("Failed to create user", slog.String("email", userReq.Email), slog.String("error", err.Error()))
 		return err
 	}
-	logger.Log.Info("User registered successfully", slog.String("email", email))
+	logger.Log.Info("User registered successfully", slog.String("email", userReq.Email))
 
 	//ctx := context.Background()
 	//key := fmt.Sprintf("pending_registration:%s", email)

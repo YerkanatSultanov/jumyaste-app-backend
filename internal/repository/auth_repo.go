@@ -43,8 +43,8 @@ func (r *AuthRepository) UserExistsByEmail(email string) (bool, error) {
 func (r *AuthRepository) CreateUser(user *entity.User) error {
 	logger.Log.Info("Creating new user", slog.String("email", user.Email))
 
-	query := "INSERT INTO users(email,password, first_name, last_name, profile_picture) VALUES ($1, $2, $3, $4, $5) RETURNING id"
-	err := r.db.QueryRow(query, user.Email, user.Password, user.FirstName, user.LastName, user.ProfilePicture).Scan(&user.ID)
+	query := "INSERT INTO users(email,password, first_name, last_name, profile_picture, role_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id"
+	err := r.db.QueryRow(query, user.Email, user.Password, user.FirstName, user.LastName, user.ProfilePicture, user.RoleID).Scan(&user.ID)
 	if err != nil {
 		logger.Log.Error("Failed to insert user",
 			slog.String("email", user.Email),
