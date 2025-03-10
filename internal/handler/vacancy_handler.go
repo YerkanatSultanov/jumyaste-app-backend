@@ -122,3 +122,57 @@ func (h *VacancyHandler) GetAllVacancies(c *gin.Context) {
 	logger.Log.Info("Vacancies retrieved", slog.Int("count", len(vacancies)))
 	c.JSON(http.StatusOK, vacancies)
 }
+
+func (h *VacancyHandler) GetMyVacancies(c *gin.Context) {
+	userID := c.GetInt("user_id")
+
+	vacancies, err := h.VacancyService.GetMyVacancies(userID)
+	if err != nil {
+		logger.Log.Error("Failed to retrieve HR vacancies", slog.Int("user_id", userID), slog.String("error", err.Error()))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve vacancies"})
+		return
+	}
+
+	c.JSON(http.StatusOK, vacancies)
+}
+
+func (h *VacancyHandler) SearchVacancies(c *gin.Context) {
+	var filter entity.VacancyFilter
+
+	if err := c.ShouldBindQuery(&filter); err != nil {
+		logger.Log.Error("Invalid search parameters", "error", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid search parameters"})
+		return
+	}
+
+	filter.Query = c.Query("query")
+
+	if employmentType := c.QueryArray("employment_type"); len(employmentType) > 0 {
+		filter.EmploymentType = employmentType
+	}
+
+	if workFormat := c.QueryArray("work_format"); len(workFormat) > 0 {
+		filter.WorkFormat = workFormat
+	}
+
+	if skills := c.QueryArray("skills"); len(skills) > 0 {
+		filter.Skills = skills
+	}
+
+	logger.Log.Info("Handling search vacancies request", "filter", filter)
+
+	vacancies, err := h.VacancyService.SearchVacancies(filter)
+	if err != nil {
+		logger.Log.Error("Failed to search vacancies", "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to search vacancies"})
+		return
+	}
+
+	if len(vacancies) == 0 {
+		logger.Log.Info("No vacancies found for the given filters", "filter", filter)
+		c.JSON(http.StatusOK, gin.H{"message": "No vacancies found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, vacancies)
+}

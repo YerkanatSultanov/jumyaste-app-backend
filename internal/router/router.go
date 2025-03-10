@@ -35,7 +35,8 @@ func SetupRouter(authHandler *handler.AuthHandler, userHandler *handler.UserHand
 		vacancyRoutes.PUT("/:id", vacancyHandler.UpdateVacancy)
 		vacancyRoutes.DELETE("/:id", vacancyHandler.DeleteVacancy)
 		vacancyRoutes.GET("/", vacancyHandler.GetAllVacancies)
+		vacancyRoutes.GET("/my", vacancyHandler.GetMyVacancies)
+		vacancyRoutes.GET("/search", vacancyHandler.SearchVacancies)
 	}
-
 	return r
 }

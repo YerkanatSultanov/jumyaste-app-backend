@@ -17,3 +17,13 @@ type Vacancy struct {
 	CreatedBy      int       `json:"created_by"`
 	CreatedAt      time.Time `json:"created_at"`
 }
+
+type VacancyFilter struct {
+	Title          string
+	Skills         []string
+	Experience     string
+	EmploymentType []string
+	WorkFormat     []string
+	Location       string
+	Query          string
+}

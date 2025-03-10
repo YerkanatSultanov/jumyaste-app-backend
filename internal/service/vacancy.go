@@ -82,3 +82,28 @@ func (s *VacancyService) GetAllVacancies() ([]*entity.Vacancy, error) {
 	logger.Log.Info("Vacancies retrieved successfully", slog.Int("count", len(vacancies)))
 	return vacancies, nil
 }
+
+func (s *VacancyService) GetMyVacancies(userID int) ([]*entity.Vacancy, error) {
+	logger.Log.Info("Fetching vacancies for HR", slog.Int("user_id", userID))
+
+	vacancies, err := s.repo.GetVacanciesByRecruiterID(userID)
+	if err != nil {
+		logger.Log.Error("Failed to retrieve vacancies", slog.String("error", err.Error()))
+		return nil, err
+	}
+	logger.Log.Info("Vacancies retrieved successfully", slog.Int("count", len(vacancies)))
+
+	return vacancies, nil
+}
+
+func (s *VacancyService) SearchVacancies(filter entity.VacancyFilter) ([]*entity.Vacancy, error) {
+	logger.Log.Info("Searching vacancies with filters", "filter", filter)
+
+	vacancies, err := s.repo.SearchVacancies(filter)
+	if err != nil {
+		logger.Log.Error("Failed to search vacancies", "error", err)
+		return nil, err
+	}
+
+	return vacancies, nil
+}

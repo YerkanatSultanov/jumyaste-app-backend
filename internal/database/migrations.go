@@ -11,6 +11,7 @@ import (
 	"jumyste-app-backend/pkg/logger"
 	"log/slog"
 	"path/filepath"
+	"strings"
 )
 
 func RunMigrations() {
@@ -35,10 +36,19 @@ func RunMigrations() {
 		return
 	}
 
-	migrationsPath, _ := filepath.Abs("./migrations")
+	migrationsPath, err := filepath.Abs("migrations")
+	if err != nil {
+		logger.Log.Error("Failed to resolve migrations path",
+			slog.String("error", err.Error()))
+		return
+	}
+
+	migrationsPath = strings.ReplaceAll(migrationsPath, "\\", "/")
 	migrationsPath = "file://" + migrationsPath
 
-	m, err := migrate.NewWithDatabaseInstance(migrationsPath, "railway", driver)
+	logger.Log.Info("Using migrations path", slog.String("path", migrationsPath))
+
+	m, err := migrate.NewWithDatabaseInstance(migrationsPath, "postgres", driver)
 	if err != nil {
 		logger.Log.Error("Failed to create migration instance",
 			slog.String("error", err.Error()))
@@ -56,6 +66,5 @@ func RunMigrations() {
 		return
 	}
 
-	logger.Log.Info("migrations applied successfully")
-
+	logger.Log.Info("Migrations applied successfully")
 }
