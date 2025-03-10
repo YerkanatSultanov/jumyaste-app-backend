@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/lib/pq"
 	"jumyste-app-backend/internal/entity"
 	"jumyste-app-backend/pkg/logger"
@@ -122,5 +123,88 @@ func (r *VacancyRepository) GetAllVacancies() ([]*entity.Vacancy, error) {
 	}
 
 	logger.Log.Info("Vacancies retrieved successfully", slog.Int("count", len(vacancies)))
+	return vacancies, nil
+}
+
+func (r *VacancyRepository) GetVacanciesByRecruiterID(userID int) ([]*entity.Vacancy, error) {
+	query := `
+		SELECT id, title, employment_type, work_format, experience, salary_min, 
+		       salary_max, location, category, skills, description, created_by
+		FROM vacancies 
+		WHERE created_by = $1`
+
+	rows, err := r.db.Query(query, userID)
+	if err != nil {
+		logger.Log.Error("Failed to fetch HR vacancies", slog.Int("user_id", userID), slog.String("error", err.Error()))
+		return nil, err
+	}
+	defer rows.Close()
+
+	var vacancies []*entity.Vacancy
+	for rows.Next() {
+		var v entity.Vacancy
+		if err := rows.Scan(&v.ID, &v.Title, &v.EmploymentType, &v.WorkFormat, &v.Experience,
+			&v.SalaryMin, &v.SalaryMax, &v.Location, &v.Category, pq.Array(&v.Skills), &v.Description, &v.CreatedBy); err != nil {
+			logger.Log.Error("Error scanning vacancy row", slog.String("error", err.Error()))
+			return nil, err
+		}
+		vacancies = append(vacancies, &v)
+	}
+
+	return vacancies, nil
+}
+
+func (r *VacancyRepository) SearchVacancies(filter entity.VacancyFilter) ([]*entity.Vacancy, error) {
+	query := `SELECT id, title, employment_type, work_format, experience, salary_min, salary_max, location, category, skills, description, created_by FROM vacancies WHERE 1=1`
+	var args []interface{}
+	argIndex := 1
+
+	if filter.Title != "" {
+		query += fmt.Sprintf(" AND title ILIKE $%d", argIndex)
+		args = append(args, "%"+filter.Title+"%")
+		argIndex++
+	}
+	if len(filter.Skills) > 0 {
+		query += fmt.Sprintf(" AND skills @> $%d", argIndex) // Для JSONB массива
+		args = append(args, pq.Array(filter.Skills))
+		argIndex++
+	}
+	if filter.Experience != "" {
+		query += fmt.Sprintf(" AND experience = $%d", argIndex)
+		args = append(args, filter.Experience)
+		argIndex++
+	}
+	if len(filter.EmploymentType) > 0 {
+		query += fmt.Sprintf(" AND employment_type = ANY($%d)", argIndex)
+		args = append(args, pq.Array(filter.EmploymentType))
+		argIndex++
+	}
+	if len(filter.WorkFormat) > 0 {
+		query += fmt.Sprintf(" AND work_format = ANY($%d)", argIndex)
+		args = append(args, pq.Array(filter.WorkFormat))
+		argIndex++
+	}
+	if filter.Location != "" {
+		query += fmt.Sprintf(" AND location ILIKE $%d", argIndex)
+		args = append(args, "%"+filter.Location+"%")
+		argIndex++
+	}
+
+	rows, err := r.db.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var vacancies []*entity.Vacancy
+	for rows.Next() {
+		var vacancy entity.Vacancy
+		err := rows.Scan(&vacancy.ID, &vacancy.Title, &vacancy.EmploymentType, &vacancy.WorkFormat, &vacancy.Experience, &vacancy.SalaryMin, &vacancy.SalaryMax, &vacancy.Location, &vacancy.Category, pq.Array(&vacancy.Skills), &vacancy.Description, &vacancy.CreatedBy)
+		if err != nil {
+			return nil, err
+		}
+		vacancies = append(vacancies, &vacancy)
+	}
+
 	return vacancies, nil
 }
