@@ -145,10 +145,32 @@ func (h *VacancyHandler) SearchVacancies(c *gin.Context) {
 		return
 	}
 
+	filter.Query = c.Query("query")
+
+	if employmentType := c.QueryArray("employment_type"); len(employmentType) > 0 {
+		filter.EmploymentType = employmentType
+	}
+
+	if workFormat := c.QueryArray("work_format"); len(workFormat) > 0 {
+		filter.WorkFormat = workFormat
+	}
+
+	if skills := c.QueryArray("skills"); len(skills) > 0 {
+		filter.Skills = skills
+	}
+
+	logger.Log.Info("Handling search vacancies request", "filter", filter)
+
 	vacancies, err := h.VacancyService.SearchVacancies(filter)
 	if err != nil {
 		logger.Log.Error("Failed to search vacancies", "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to search vacancies"})
+		return
+	}
+
+	if len(vacancies) == 0 {
+		logger.Log.Info("No vacancies found for the given filters", "filter", filter)
+		c.JSON(http.StatusOK, gin.H{"message": "No vacancies found"})
 		return
 	}
 

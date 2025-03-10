@@ -164,29 +164,40 @@ func (r *VacancyRepository) SearchVacancies(filter entity.VacancyFilter) ([]*ent
 		args = append(args, "%"+filter.Title+"%")
 		argIndex++
 	}
+
 	if len(filter.Skills) > 0 {
-		query += fmt.Sprintf(" AND skills @> $%d", argIndex) // Для JSONB массива
+		query += fmt.Sprintf(" AND skills @> $%d", argIndex)
 		args = append(args, pq.Array(filter.Skills))
 		argIndex++
 	}
+
 	if filter.Experience != "" {
 		query += fmt.Sprintf(" AND experience = $%d", argIndex)
 		args = append(args, filter.Experience)
 		argIndex++
 	}
+
 	if len(filter.EmploymentType) > 0 {
 		query += fmt.Sprintf(" AND employment_type = ANY($%d)", argIndex)
 		args = append(args, pq.Array(filter.EmploymentType))
 		argIndex++
 	}
+
 	if len(filter.WorkFormat) > 0 {
 		query += fmt.Sprintf(" AND work_format = ANY($%d)", argIndex)
 		args = append(args, pq.Array(filter.WorkFormat))
 		argIndex++
 	}
+
 	if filter.Location != "" {
 		query += fmt.Sprintf(" AND location ILIKE $%d", argIndex)
 		args = append(args, "%"+filter.Location+"%")
+		argIndex++
+	}
+
+	if filter.Query != "" {
+		query += fmt.Sprintf(" AND search_vector @@ plainto_tsquery('russian', $%d)", argIndex)
+		args = append(args, filter.Query)
 		argIndex++
 	}
 

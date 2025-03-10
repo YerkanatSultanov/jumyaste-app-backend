@@ -19,10 +19,11 @@ type Vacancy struct {
 }
 
 type VacancyFilter struct {
-	Title          string   `form:"title"`
-	Skills         []string `form:"skills[]"`
-	Experience     string   `form:"experience"`
-	EmploymentType []string `form:"employment_type[]"`
-	WorkFormat     []string `form:"work_format[]"`
-	Location       string   `form:"location"`
+	Title          string
+	Skills         []string
+	Experience     string
+	EmploymentType []string
+	WorkFormat     []string
+	Location       string
+	Query          string
 }
