@@ -13,6 +13,7 @@ type Config struct {
 	Database DatabaseConfig
 	JWT      JWTConfig
 	SMTP     SMTPConfig
+	AI       AIConfig
 }
 
 type ServerConfig struct {
@@ -39,6 +40,10 @@ type SMTPConfig struct {
 	Username string
 	Password string
 	Sender   string
+}
+
+type AIConfig struct {
+	APIKey string
 }
 
 var AppConfig Config
@@ -70,6 +75,9 @@ func LoadConfig() {
 			Username: getEnv("SMTP_USERNAME", ""),
 			Password: getEnv("SMTP_PASSWORD", ""),
 			Sender:   getEnv("SMTP_SENDER", "noreply@jumyste-app.local"),
+		},
+		AI: AIConfig{
+			APIKey: getEnv("OPENAI_API_KE", ""),
 		},
 	}
 }

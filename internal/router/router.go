@@ -6,7 +6,11 @@ import (
 	"jumyste-app-backend/internal/middleware"
 )
 
-func SetupRouter(authHandler *handler.AuthHandler, userHandler *handler.UserHandler, vacancyHandler *handler.VacancyHandler, authMiddleware *middleware.AuthMiddleware) *gin.Engine {
+func SetupRouter(authHandler *handler.AuthHandler,
+	userHandler *handler.UserHandler,
+	vacancyHandler *handler.VacancyHandler,
+	resumeHandler *handler.ResumeHandler,
+	authMiddleware *middleware.AuthMiddleware) *gin.Engine {
 	r := gin.Default()
 	r.Use(middleware.CORSMiddleware())
 
@@ -37,6 +41,11 @@ func SetupRouter(authHandler *handler.AuthHandler, userHandler *handler.UserHand
 		vacancyRoutes.GET("/", vacancyHandler.GetAllVacancies)
 		vacancyRoutes.GET("/my", vacancyHandler.GetMyVacancies)
 		vacancyRoutes.GET("/search", vacancyHandler.SearchVacancies)
+	}
+	resume := r.Group("/api/resume")
+	resume.Use(authMiddleware.VerifyTokenMiddleware())
+	{
+		resume.POST("/upload", resumeHandler.UploadResume)
 	}
 	return r
 }

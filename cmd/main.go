@@ -19,7 +19,7 @@ func main() {
 
 	auth := middleware.NewAuthMiddleware(config.AppConfig)
 
-	r := router.SetupRouter(app.AuthHandler, app.UserHandler, app.VacancyHandler, auth)
+	r := router.SetupRouter(app.AuthHandler, app.UserHandler, app.VacancyHandler, app.ResumeHandler, auth)
 
 	serverPort := config.AppConfig.Server.Port
 	addr := fmt.Sprintf(":%s", serverPort)
