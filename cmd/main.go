@@ -22,6 +22,7 @@ func main() {
 
 	auth := middleware.NewAuthMiddleware(config.AppConfig)
 
+
 	r := router.SetupRouter(
 		app.AuthHandler,
 		app.UserHandler,
@@ -30,9 +31,7 @@ func main() {
 		app.MessageHandler,
 		auth,
 	)
-
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-
+  
 	serverPort := config.AppConfig.Server.Port
 	addr := fmt.Sprintf(":%s", serverPort)
 	logger.Log.Info("Starting server", "port", serverPort)

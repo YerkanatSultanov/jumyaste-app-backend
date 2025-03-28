@@ -61,6 +61,11 @@ func SetupRouter(
 		messageRoutes.POST("/", messageHandler.SendMessageHandler)
 		messageRoutes.GET("/chat/:chatID", messageHandler.GetMessagesByChatIDHandler)
 		messageRoutes.GET("/:messageID", messageHandler.GetMessageByIDHandler)
+  }
+	resume := r.Group("/api/resume")
+	resume.Use(authMiddleware.VerifyTokenMiddleware())
+	{
+		resume.POST("/upload", resumeHandler.UploadResume)
 	}
 	return r
 }

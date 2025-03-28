@@ -1,6 +1,7 @@
 package applicator
 
 import (
+	"jumyste-app-backend/internal/ai"
 	"jumyste-app-backend/internal/database"
 	"jumyste-app-backend/internal/handler"
 	"jumyste-app-backend/internal/repository"
@@ -16,9 +17,12 @@ type App struct {
 	AuthService    *service.AuthService
 	UserService    *service.UserService
 	VacancyService *service.VacancyService
+	ResumeService  *service.ResumeService
 	AuthHandler    *handler.AuthHandler
 	UserHandler    *handler.UserHandler
 	VacancyHandler *handler.VacancyHandler
+	ResumeHandler  *handler.ResumeHandler
+	AIClient       *ai.OpenAIClient
 	//RedisClient *redis.Client
 	ChatHandler    *handler.ChatHandler
 	MessageHandler *handler.MessageHandler
@@ -31,6 +35,9 @@ func NewApp() *App {
 
 	//logger.Log.Info("Initializing Redis...")
 	////redisClient := redisPkg.InitRedis()
+
+	logger.Log.Info("Initializing AI client...")
+	aiClient := ai.NewOpenAIClient()
 
 	logger.Log.Info("Initializing repositories...")
 	authRepo := repository.NewAuthRepository(database.DB)
@@ -45,6 +52,7 @@ func NewApp() *App {
 	vacancyService := service.NewVacancyService(vacancyRepo)
 	chatService := service.NewChatService(chatRepo)
 	messageService := service.NewMessageService(messageRepo)
+	resumeService := service.NewResumeService(aiClient)
 
 	logger.Log.Info("Initializing handlers...")
 	authHandler := handler.NewAuthHandler(authService)
@@ -52,19 +60,25 @@ func NewApp() *App {
 	vacancyHandler := handler.NewVacancyHandler(vacancyService)
 	chatHandler := handler.NewChatHandler(chatService)
 	messageHandler := handler.NewMessageHandler(messageService)
+	resumeHandler := handler.NewResumeHandler(resumeService)
 
 	logger.Log.Info("Application initialized successfully")
 
 	return &App{
 		AuthRepo:       authRepo,
 		UserRepo:       userRepo,
+		VacancyRepo:    vacancyRepo,
 		AuthService:    authService,
 		UserService:    userService,
+		VacancyService: vacancyService,
+		ResumeService:  resumeService,
 		AuthHandler:    authHandler,
 		UserHandler:    userHandler,
 		VacancyHandler: vacancyHandler,
 		ChatHandler:    chatHandler,
 		MessageHandler: messageHandler,
+		ResumeHandler:  resumeHandler,
+		AIClient:       aiClient,
 		//RedisClient: redisClient,
 	}
 }
