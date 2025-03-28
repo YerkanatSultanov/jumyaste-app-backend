@@ -6,11 +6,15 @@ import (
 	"jumyste-app-backend/internal/middleware"
 )
 
-func SetupRouter(authHandler *handler.AuthHandler,
+func SetupRouter(
+	authHandler *handler.AuthHandler,
 	userHandler *handler.UserHandler,
 	vacancyHandler *handler.VacancyHandler,
-	resumeHandler *handler.ResumeHandler,
-	authMiddleware *middleware.AuthMiddleware) *gin.Engine {
+	chatHandler *handler.ChatHandler,
+	messageHandler *handler.MessageHandler,
+
+	authMiddleware *middleware.AuthMiddleware,
+) *gin.Engine {
 	r := gin.Default()
 	r.Use(middleware.CORSMiddleware())
 
@@ -42,6 +46,22 @@ func SetupRouter(authHandler *handler.AuthHandler,
 		vacancyRoutes.GET("/my", vacancyHandler.GetMyVacancies)
 		vacancyRoutes.GET("/search", vacancyHandler.SearchVacancies)
 	}
+
+	chatRoutes := r.Group("/api/chats")
+	chatRoutes.Use(middleware.AuthMiddlewares())
+	{
+		chatRoutes.POST("/", chatHandler.CreateChatHandler)
+		chatRoutes.GET("/:chatID", chatHandler.GetChatByIDHandler)
+		chatRoutes.GET("/", chatHandler.GetAllChatsHandler)
+	}
+
+	messageRoutes := r.Group("/api/messages")
+	messageRoutes.Use(middleware.AuthMiddlewares())
+	{
+		messageRoutes.POST("/", messageHandler.SendMessageHandler)
+		messageRoutes.GET("/chat/:chatID", messageHandler.GetMessagesByChatIDHandler)
+		messageRoutes.GET("/:messageID", messageHandler.GetMessageByIDHandler)
+  }
 	resume := r.Group("/api/resume")
 	resume.Use(authMiddleware.VerifyTokenMiddleware())
 	{
