@@ -20,6 +20,8 @@ type App struct {
 	UserHandler    *handler.UserHandler
 	VacancyHandler *handler.VacancyHandler
 	//RedisClient *redis.Client
+	ChatHandler    *handler.ChatHandler
+	MessageHandler *handler.MessageHandler
 }
 
 func NewApp() *App {
@@ -34,16 +36,22 @@ func NewApp() *App {
 	authRepo := repository.NewAuthRepository(database.DB)
 	userRepo := repository.NewUserRepository(database.DB)
 	vacancyRepo := repository.NewVacancyRepository(database.DB)
+	chatRepo := repository.NewChatRepository(database.DB)
+	messageRepo := repository.NewMessageRepository(database.DB)
 
 	logger.Log.Info("Initializing services...")
 	authService := service.NewAuthService(authRepo)
 	userService := service.NewUserService(userRepo)
 	vacancyService := service.NewVacancyService(vacancyRepo)
+	chatService := service.NewChatService(chatRepo)
+	messageService := service.NewMessageService(messageRepo)
 
 	logger.Log.Info("Initializing handlers...")
 	authHandler := handler.NewAuthHandler(authService)
 	userHandler := handler.NewUserHandler(userService)
 	vacancyHandler := handler.NewVacancyHandler(vacancyService)
+	chatHandler := handler.NewChatHandler(chatService)
+	messageHandler := handler.NewMessageHandler(messageService)
 
 	logger.Log.Info("Application initialized successfully")
 
@@ -55,6 +63,8 @@ func NewApp() *App {
 		AuthHandler:    authHandler,
 		UserHandler:    userHandler,
 		VacancyHandler: vacancyHandler,
+		ChatHandler:    chatHandler,
+		MessageHandler: messageHandler,
 		//RedisClient: redisClient,
 	}
 }
