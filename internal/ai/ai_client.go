@@ -39,30 +39,33 @@ type OpenAIResponse struct {
 	} `json:"choices"`
 }
 
-// AnalyzeResume отправляет текст резюме в AI и получает JSON-ответ
 func (c *OpenAIClient) AnalyzeResume(text string) (map[string]interface{}, error) {
 	prompt := fmt.Sprintf(`
-					You are an AI specializing in analyzing resumes and extracting key fields.
-					Your task is to restore spaces, correct errors, and return the result in **pure JSON format**.
+You are an AI that analyzes resume text and extracts key fields.
+Fix spacing, correct errors, and return a structured JSON without any explanations.
 
-					Output **only JSON**, without any explanations or additional text.
+Return **only JSON**, for example:
 
-					Example response:
+{
+  "name": "Yerkanat Sultanov",
+  "contacts": { "phone": "+77471089155", "email": "example@mail.com" },
+  "skills": ["Go", "Python", "PostgreSQL"],
+  "improvements": [
+    "Add more details about recent work experience.",
+    "Include more quantifiable achievements.",
+    "Specify proficiency levels for key skills."
+  ]
+}
 
-					{
-  						"name": "Yerkanat Sultanov",
-  						"contacts": { "phone": "+77471089155", "email": "example@mail.com" },
-  						"skills": ["Go", "Python", "PostgreSQL"]
-					}
+⚠️ Important:
+- Return **only JSON**, **without any explanations**.
+- **Do not include empty fields**.
+- Fix spacing and properly interpret the text.
+- **Provide useful suggestions for improving the resume** in the "improvements" field.
 
-					⚠️ Important:
-					- Output **only JSON**, with **no explanations or extra text**.
-					- **Do not include empty fields**.
-					- Fix missing spaces and formatting issues in the text.
-
-					Here is the resume text:
-					%s
-					`, text)
+Here is the resume text:
+%s
+`, text)
 
 	requestBody, err := json.Marshal(OpenAIRequest{
 		Model: "gpt-4o-mini",

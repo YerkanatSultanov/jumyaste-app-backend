@@ -2,6 +2,9 @@ package router
 
 import (
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	"github.com/swaggo/gin-swagger"
+	_ "jumyste-app-backend/docs"
 	"jumyste-app-backend/internal/handler"
 	"jumyste-app-backend/internal/middleware"
 )
@@ -12,11 +15,13 @@ func SetupRouter(
 	vacancyHandler *handler.VacancyHandler,
 	chatHandler *handler.ChatHandler,
 	messageHandler *handler.MessageHandler,
-
+	resumeHandler *handler.ResumeHandler,
 	authMiddleware *middleware.AuthMiddleware,
 ) *gin.Engine {
 	r := gin.Default()
 	r.Use(middleware.CORSMiddleware())
+
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	auth := r.Group("/api/auth")
 	{
@@ -37,6 +42,7 @@ func SetupRouter(
 	}
 
 	vacancyRoutes := r.Group("/api/vacancies")
+	vacancyRoutes.Use(authMiddleware.VerifyTokenMiddleware())
 	vacancyRoutes.Use(middleware.RequireRole(2))
 	{
 		vacancyRoutes.POST("/", vacancyHandler.CreateVacancy)
@@ -61,7 +67,7 @@ func SetupRouter(
 		messageRoutes.POST("/", messageHandler.SendMessageHandler)
 		messageRoutes.GET("/chat/:chatID", messageHandler.GetMessagesByChatIDHandler)
 		messageRoutes.GET("/:messageID", messageHandler.GetMessageByIDHandler)
-  }
+	}
 	resume := r.Group("/api/resume")
 	resume.Use(authMiddleware.VerifyTokenMiddleware())
 	{

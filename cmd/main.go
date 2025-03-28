@@ -1,9 +1,17 @@
+// @title Jumyste App API
+// @version 1.0
+// @description API for Jumyste application
+// @host localhost:8080
+// @BasePath /api
+
+// @securityDefinitions.apikey	BearerAuth
+// @type						apiKey
+// @name						Authorization
+// @in							header
 package main
 
 import (
 	"fmt"
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
 	"jumyste-app-backend/config"
 	"jumyste-app-backend/internal/applicator"
 	"jumyste-app-backend/internal/middleware"
@@ -22,16 +30,16 @@ func main() {
 
 	auth := middleware.NewAuthMiddleware(config.AppConfig)
 
-
 	r := router.SetupRouter(
 		app.AuthHandler,
 		app.UserHandler,
 		app.VacancyHandler,
 		app.ChatHandler,
 		app.MessageHandler,
+		app.ResumeHandler,
 		auth,
 	)
-  
+
 	serverPort := config.AppConfig.Server.Port
 	addr := fmt.Sprintf(":%s", serverPort)
 	logger.Log.Info("Starting server", "port", serverPort)

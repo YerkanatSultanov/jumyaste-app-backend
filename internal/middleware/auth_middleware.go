@@ -4,6 +4,8 @@ import (
 	"errors"
 	"github.com/golang-jwt/jwt/v5"
 	"jumyste-app-backend/config"
+	"jumyste-app-backend/pkg/logger"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -40,7 +42,10 @@ func (m *AuthMiddleware) VerifyTokenMiddleware() gin.HandlerFunc {
 			return
 		}
 
+		logger.Log.Info("User authenticated", slog.Int("user_id", claims.UserID), slog.Int("role_id", claims.RoleID))
+
 		c.Set("user_id", claims.UserID)
+		c.Set("role_id", claims.RoleID)
 		c.Next()
 	}
 }
@@ -71,5 +76,6 @@ func (m *AuthMiddleware) validateToken(tokenString string) (*CustomClaims, error
 
 type CustomClaims struct {
 	UserID int `json:"user_id"`
+	RoleID int `json:"role_id"`
 	jwt.RegisteredClaims
 }

@@ -1,0 +1,665 @@
+basePath: /api
+definitions:
+  dto.CreateVacancyRequest:
+    properties:
+      category:
+        example: IT
+        type: string
+      description:
+        example: <h3><strong><em><s>Hello</s></em></strong></h3>
+        type: string
+      employment_type:
+        example: Полная занятость
+        type: string
+      experience:
+        example: Без опыта
+        type: string
+      location:
+        example: Almaty
+        type: string
+      salary_max:
+        example: 909000
+        type: integer
+      salary_min:
+        example: 253000
+        type: integer
+      skills:
+        example:
+        - '["Python"'
+        - '"Node.js"]'
+        items:
+          type: string
+        type: array
+      title:
+        example: Frontend developer
+        type: string
+      work_format:
+        example: Гибрид
+        type: string
+    type: object
+  dto.ErrorResponse:
+    properties:
+      error:
+        example: Invalid input
+        type: string
+    type: object
+  dto.LoginRequest:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+      password:
+        example: securepassword
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  dto.LoginResponse:
+    properties:
+      token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+    type: object
+  dto.RegisterUserRequest:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+      first_name:
+        example: John
+        type: string
+      last_name:
+        example: Doe
+        type: string
+      password:
+        example: securepassword
+        type: string
+      role_id:
+        example: 3
+        type: integer
+    required:
+    - email
+    - first_name
+    - last_name
+    - password
+    type: object
+  dto.RequestPasswordResetRequest:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+    required:
+    - email
+    type: object
+  dto.RequestPasswordResetResponse:
+    properties:
+      message:
+        example: Reset code sent to your email
+        type: string
+    type: object
+  dto.ResetPasswordRequest:
+    properties:
+      confirm_password:
+        example: newSecurePass
+        type: string
+      email:
+        example: user@example.com
+        type: string
+      new_password:
+        example: newSecurePass
+        type: string
+      reset_code:
+        example: "123456"
+        type: string
+    required:
+    - confirm_password
+    - email
+    - new_password
+    - reset_code
+    type: object
+  dto.ResetPasswordResponse:
+    properties:
+      message:
+        example: Password reset successful
+        type: string
+    type: object
+  dto.SuccessResponse:
+    properties:
+      message:
+        example: User registered successfully
+        type: string
+    type: object
+  dto.UpdateVacancyRequest:
+    properties:
+      category:
+        type: string
+      description:
+        type: string
+      employment_type:
+        type: string
+      experience:
+        type: string
+      location:
+        type: string
+      salary_max:
+        type: integer
+      salary_min:
+        type: integer
+      skills:
+        items:
+          type: string
+        type: array
+      title:
+        type: string
+      work_format:
+        type: string
+    required:
+    - category
+    - description
+    - employment_type
+    - experience
+    - location
+    - salary_max
+    - salary_min
+    - skills
+    - title
+    - work_format
+    type: object
+  entity.User:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      first_name:
+        type: string
+      id:
+        type: integer
+      last_name:
+        type: string
+      password:
+        type: string
+      profile_picture:
+        type: string
+      role_id:
+        type: integer
+    type: object
+  entity.Vacancy:
+    properties:
+      category:
+        type: string
+      created_at:
+        type: string
+      created_by:
+        type: integer
+      description:
+        type: string
+      employment_type:
+        type: string
+      experience:
+        type: string
+      id:
+        type: integer
+      location:
+        type: string
+      salary_max:
+        type: integer
+      salary_min:
+        type: integer
+      skills:
+        items:
+          type: string
+        type: array
+      title:
+        type: string
+      work_format:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API for Jumyste application
+  title: Jumyste App API
+  version: "1.0"
+paths:
+  /auth/forgot-password:
+    post:
+      consumes:
+      - application/json
+      description: Sends a password reset code to the user's email.
+      parameters:
+      - description: User email
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RequestPasswordResetRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.RequestPasswordResetResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Request password reset
+      tags:
+      - Auth
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates a user and returns a JWT token.
+      parameters:
+      - description: Login credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.LoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: User login
+      tags:
+      - Auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new user account with the provided details.
+      parameters:
+      - description: User registration data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RegisterUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Register a new user
+      tags:
+      - Auth
+  /auth/reset-password:
+    post:
+      consumes:
+      - application/json
+      description: Resets the password using a reset code.
+      parameters:
+      - description: Reset password request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ResetPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ResetPasswordResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Reset user password
+      tags:
+      - Auth
+  /resume/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Accepts a PDF file, extracts text, and returns structured resume
+        data
+      parameters:
+      - description: Resume file (PDF only)
+        in: formData
+        name: resume
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Parsed resume data
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Failed to retrieve resume file
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Failed to process resume
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Upload and parse a resume
+      tags:
+      - Resume
+  /users/me:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves the profile information of the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User profile information
+          schema:
+            $ref: '#/definitions/entity.User'
+        "401":
+          description: Unauthorized - Token is missing or invalid
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: User not found - No user associated with the given ID
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal server error - Invalid user ID type
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get user information
+      tags:
+      - Users
+    patch:
+      consumes:
+      - application/json
+      description: Update user details such as name, email, or profile picture
+      parameters:
+      - description: Fields to update
+        in: body
+        name: updates
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.SuccessResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Failed to update user
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update user information
+      tags:
+      - Users
+  /vacancies:
+    get:
+      description: Retrieves a list of all vacancies
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of vacancies
+          schema:
+            items:
+              $ref: '#/definitions/entity.Vacancy'
+            type: array
+        "500":
+          description: Failed to fetch vacancies
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all vacancies
+      tags:
+      - Vacancies
+    post:
+      consumes:
+      - application/json
+      description: Allows an employer to create a new vacancy
+      parameters:
+      - description: Vacancy details
+        in: body
+        name: vacancy
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateVacancyRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Vacancy successfully created
+          schema:
+            $ref: '#/definitions/entity.Vacancy'
+        "400":
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Failed to create vacancy
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new vacancy
+      tags:
+      - Vacancies
+  /vacancies/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Allows an employer to delete their own vacancy
+      parameters:
+      - description: Vacancy ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Vacancy deleted successfully
+          schema:
+            $ref: '#/definitions/dto.SuccessResponse'
+        "400":
+          description: Invalid vacancy ID
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "403":
+          description: User does not own the vacancy
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Vacancy not found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Failed to delete vacancy
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a vacancy
+      tags:
+      - Vacancies
+    put:
+      consumes:
+      - application/json
+      description: Allows an employer to update their own vacancy
+      parameters:
+      - description: Vacancy ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Updated vacancy details
+        in: body
+        name: vacancy
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateVacancyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Vacancy updated successfully
+          schema:
+            $ref: '#/definitions/dto.SuccessResponse'
+        "400":
+          description: Invalid input or vacancy ID
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "403":
+          description: User does not own the vacancy
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Vacancy not found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Failed to update vacancy
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update an existing vacancy
+      tags:
+      - Vacancies
+  /vacancies/my:
+    get:
+      consumes:
+      - application/json
+      description: Returns a list of vacancies created by the currently authenticated
+        HR user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of vacancies
+          schema:
+            items:
+              $ref: '#/definitions/entity.Vacancy'
+            type: array
+        "500":
+          description: Failed to retrieve vacancies
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get vacancies created by the authenticated HR
+      tags:
+      - Vacancies
+  /vacancies/search:
+    get:
+      consumes:
+      - application/json
+      description: Allows searching for vacancies based on various filters
+      parameters:
+      - description: Search query
+        in: query
+        name: query
+        type: string
+      - collectionFormat: multi
+        description: Employment type filter
+        in: query
+        items:
+          type: string
+        name: employment_type
+        type: array
+      - collectionFormat: multi
+        description: Work format filter
+        in: query
+        items:
+          type: string
+        name: work_format
+        type: array
+      - collectionFormat: multi
+        description: Skills filter
+        in: query
+        items:
+          type: string
+        name: skills
+        type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of matching vacancies
+          schema:
+            items:
+              $ref: '#/definitions/entity.Vacancy'
+            type: array
+        "400":
+          description: Invalid search parameters
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Failed to search vacancies
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Search for vacancies
+      tags:
+      - Vacancies
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

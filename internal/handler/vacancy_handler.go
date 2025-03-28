@@ -2,6 +2,7 @@ package handler
 
 import (
 	"github.com/gin-gonic/gin"
+	"jumyste-app-backend/internal/dto"
 	"jumyste-app-backend/internal/entity"
 	"jumyste-app-backend/internal/service"
 	"jumyste-app-backend/pkg/logger"
@@ -18,13 +19,26 @@ func NewVacancyHandler(vacancyService *service.VacancyService) *VacancyHandler {
 	return &VacancyHandler{VacancyService: vacancyService}
 }
 
+// CreateVacancy godoc
+//
+// @Summary Create a new vacancy
+// @Description Allows an employer to create a new vacancy
+// @Tags Vacancies
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param vacancy body dto.CreateVacancyRequest true "Vacancy details"
+// @Success 201 {object} entity.Vacancy "Vacancy successfully created"
+// @Failure 400 {object} dto.ErrorResponse "Invalid input"
+// @Failure 500 {object} dto.ErrorResponse "Failed to create vacancy"
+// @Router /vacancies [post]
 func (h *VacancyHandler) CreateVacancy(c *gin.Context) {
 	userID := c.GetInt("user_id")
 
 	var vacancy entity.Vacancy
 	if err := c.ShouldBindJSON(&vacancy); err != nil {
 		logger.Log.Error("Invalid vacancy input", slog.String("error", err.Error()))
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: "Invalid input"})
 		return
 	}
 
@@ -42,6 +56,22 @@ func (h *VacancyHandler) CreateVacancy(c *gin.Context) {
 	c.JSON(http.StatusCreated, vacancy)
 }
 
+// UpdateVacancy godoc
+//
+// @Summary Update an existing vacancy
+// @Description Allows an employer to update their own vacancy
+// @Tags Vacancies
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Vacancy ID"
+// @Param vacancy body dto.UpdateVacancyRequest true "Updated vacancy details"
+// @Success 200 {object} dto.SuccessResponse "Vacancy updated successfully"
+// @Failure 400 {object} dto.ErrorResponse "Invalid input or vacancy ID"
+// @Failure 403 {object} dto.ErrorResponse "User does not own the vacancy"
+// @Failure 404 {object} dto.ErrorResponse "Vacancy not found"
+// @Failure 500 {object} dto.ErrorResponse "Failed to update vacancy"
+// @Router /vacancies/{id} [put]
 func (h *VacancyHandler) UpdateVacancy(c *gin.Context) {
 	vacancyID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -81,11 +111,26 @@ func (h *VacancyHandler) UpdateVacancy(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Vacancy updated successfully"})
 }
 
+// DeleteVacancy godoc
+//
+// @Summary Delete a vacancy
+// @Description Allows an employer to delete their own vacancy
+// @Tags Vacancies
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Vacancy ID"
+// @Success 200 {object} dto.SuccessResponse "Vacancy deleted successfully"
+// @Failure 400 {object} dto.ErrorResponse "Invalid vacancy ID"
+// @Failure 403 {object} dto.ErrorResponse "User does not own the vacancy"
+// @Failure 404 {object} dto.ErrorResponse "Vacancy not found"
+// @Failure 500 {object} dto.ErrorResponse "Failed to delete vacancy"
+// @Router /vacancies/{id} [delete]
 func (h *VacancyHandler) DeleteVacancy(c *gin.Context) {
 	vacancyID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		logger.Log.Error("Invalid vacancy ID", slog.String("error", err.Error()))
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid vacancy ID"})
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: "Invalid vacancy ID"})
 		return
 	}
 
@@ -96,21 +141,30 @@ func (h *VacancyHandler) DeleteVacancy(c *gin.Context) {
 
 	err = h.VacancyService.DeleteVacancy(vacancyID, userID)
 	if err != nil {
-		if err.Error() == "vacancy not found" {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Vacancy not found"})
-			return
+		switch err.Error() {
+		case "vacancy not found":
+			c.JSON(http.StatusNotFound, dto.ErrorResponse{Error: "Vacancy not found"})
+		case "you can only delete your own vacancies":
+			c.JSON(http.StatusForbidden, dto.ErrorResponse{Error: "You can only delete your own vacancies"})
+		default:
+			c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: "Failed to delete vacancy"})
 		}
-		if err.Error() == "you can only delete your own vacancies" {
-			c.JSON(http.StatusForbidden, gin.H{"error": "You can only delete your own vacancies"})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete vacancy"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Vacancy deleted successfully"})
+	c.JSON(http.StatusOK, dto.SuccessResponse{Message: "Vacancy deleted successfully"})
 }
 
+// GetAllVacancies godoc
+//
+// @Summary Get all vacancies
+// @Description Retrieves a list of all vacancies
+// @Tags Vacancies
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {array} entity.Vacancy "List of vacancies"
+// @Failure 500 {object} dto.ErrorResponse "Failed to fetch vacancies"
+// @Router /vacancies [get]
 func (h *VacancyHandler) GetAllVacancies(c *gin.Context) {
 	vacancies, err := h.VacancyService.GetAllVacancies()
 	if err != nil {
@@ -123,25 +177,52 @@ func (h *VacancyHandler) GetAllVacancies(c *gin.Context) {
 	c.JSON(http.StatusOK, vacancies)
 }
 
+// GetMyVacancies godoc
+//
+// @Summary Get vacancies created by the authenticated HR
+// @Description Returns a list of vacancies created by the currently authenticated HR user
+// @Tags Vacancies
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {array} entity.Vacancy "List of vacancies"
+// @Failure 500 {object} dto.ErrorResponse "Failed to retrieve vacancies"
+// @Router /vacancies/my [get]
 func (h *VacancyHandler) GetMyVacancies(c *gin.Context) {
 	userID := c.GetInt("user_id")
 
 	vacancies, err := h.VacancyService.GetMyVacancies(userID)
 	if err != nil {
 		logger.Log.Error("Failed to retrieve HR vacancies", slog.Int("user_id", userID), slog.String("error", err.Error()))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve vacancies"})
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: "Failed to retrieve vacancies"})
 		return
 	}
 
 	c.JSON(http.StatusOK, vacancies)
 }
 
+// SearchVacancies godoc
+//
+// @Summary Search for vacancies
+// @Description Allows searching for vacancies based on various filters
+// @Tags Vacancies
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param query query string false "Search query"
+// @Param employment_type query []string false "Employment type filter" collectionFormat(multi)
+// @Param work_format query []string false "Work format filter" collectionFormat(multi)
+// @Param skills query []string false "Skills filter" collectionFormat(multi)
+// @Success 200 {array} entity.Vacancy "List of matching vacancies"
+// @Failure 400 {object} dto.ErrorResponse "Invalid search parameters"
+// @Failure 500 {object} dto.ErrorResponse "Failed to search vacancies"
+// @Router /vacancies/search [get]
 func (h *VacancyHandler) SearchVacancies(c *gin.Context) {
 	var filter entity.VacancyFilter
 
 	if err := c.ShouldBindQuery(&filter); err != nil {
 		logger.Log.Error("Invalid search parameters", "error", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid search parameters"})
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: "Invalid search parameters"})
 		return
 	}
 
@@ -164,7 +245,7 @@ func (h *VacancyHandler) SearchVacancies(c *gin.Context) {
 	vacancies, err := h.VacancyService.SearchVacancies(filter)
 	if err != nil {
 		logger.Log.Error("Failed to search vacancies", "error", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to search vacancies"})
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: "Failed to search vacancies"})
 		return
 	}
 
