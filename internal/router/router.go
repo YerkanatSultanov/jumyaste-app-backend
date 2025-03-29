@@ -21,7 +21,7 @@ func SetupRouter(
 	r := gin.Default()
 	r.Use(middleware.CORSMiddleware())
 
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	r.GET("api/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	auth := r.Group("/api/auth")
 	{
