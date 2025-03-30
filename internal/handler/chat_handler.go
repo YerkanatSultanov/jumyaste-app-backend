@@ -62,3 +62,25 @@ func (h *ChatHandler) GetAllChatsHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, chats)
 }
+
+func (h *ChatHandler) GetChatsByUserIDHandler(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	uid, ok := userID.(int)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	chats, err := h.ChatService.GetChatsByUserID(uid)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch chats"})
+		return
+	}
+
+	c.JSON(http.StatusOK, chats)
+}

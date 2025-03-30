@@ -64,6 +64,7 @@ func SetupRouter(
 		chatRoutes.POST("/", chatHandler.CreateChatHandler)
 		chatRoutes.GET("/:chatID", chatHandler.GetChatByIDHandler)
 		chatRoutes.GET("/", chatHandler.GetAllChatsHandler)
+		chatRoutes.GET("/user", chatHandler.GetChatsByUserIDHandler)
 	}
 
 	// --- Сообщения ---

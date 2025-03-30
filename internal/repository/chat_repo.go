@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"github.com/lib/pq"
 	"jumyste-app-backend/internal/entity"
+	"jumyste-app-backend/pkg/logger"
+	"log/slog"
 	"time"
 )
 
@@ -112,6 +114,93 @@ func (r *ChatRepository) GetUsersByIDs(userIDs []uint) ([]entity.UserResponse, e
 	for rows.Next() {
 		var user entity.UserResponse
 		if err := rows.Scan(&user.ID, &user.FirstName, &user.LastName, &user.Email); err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+
+	return users, nil
+}
+
+// GetChatsByUserID - Получает все чаты, в которых состоит пользователь
+func (r *ChatRepository) GetChatsByUserID(userID int) ([]entity.Chat, error) {
+	query := `
+		SELECT 
+		    c.id, 
+		    c.created_at, 
+		    c.updated_at,
+		    COALESCE(m.content, '') AS last_message, 
+		    m.created_at AS last_message_at,
+		    ($1 = ANY(m.read_by)) AS is_read
+		FROM chats c
+		JOIN chat_users cu ON c.id = cu.chat_id
+		LEFT JOIN (
+		    SELECT DISTINCT ON (chat_id) chat_id, content, created_at, read_by
+		    FROM messages
+		    ORDER BY chat_id, created_at DESC
+		) m ON c.id = m.chat_id
+		WHERE cu.user_id = $1
+		ORDER BY m.created_at DESC NULLS LAST;
+	`
+
+	rows, err := r.DB.Query(query, userID)
+	if err != nil {
+		logger.Log.Error("Failed to fetch chats", slog.Int("user_id", userID), slog.String("error", err.Error()))
+		return nil, err
+	}
+	defer rows.Close()
+
+	var chats []entity.Chat
+	for rows.Next() {
+		var chat entity.Chat
+		var lastMessage string
+		var lastMessageAt sql.NullTime
+		var isRead bool
+
+		if err := rows.Scan(&chat.ID, &chat.CreatedAt, &chat.UpdatedAt, &lastMessage, &lastMessageAt, &isRead); err != nil {
+			return nil, err
+		}
+
+		chat.LastMessage = lastMessage
+		if lastMessageAt.Valid {
+			chat.LastMessageAt = lastMessageAt.Time
+		}
+		chat.IsRead = isRead
+
+		users, err := r.GetUsersByChatID(chat.ID, userID)
+		if err != nil {
+			return nil, err
+		}
+		chat.Users = users
+
+		chats = append(chats, chat)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return chats, nil
+}
+
+// GetUsersByChatID - Получает собеседников в чате
+func (r *ChatRepository) GetUsersByChatID(chatID, userID int) ([]entity.UserResponse, error) {
+	query := `
+		SELECT u.id, u.email, u.first_name, u.last_name, u.profile_picture 
+		FROM users u 
+		JOIN chat_users cu ON u.id = cu.user_id 
+		WHERE cu.chat_id = $1 AND u.id != $2`
+
+	rows, err := r.DB.Query(query, chatID, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []entity.UserResponse
+	for rows.Next() {
+		var user entity.UserResponse
+		if err := rows.Scan(&user.ID, &user.Email, &user.FirstName, &user.LastName, &user.ProfilePicture); err != nil {
 			return nil, err
 		}
 		users = append(users, user)

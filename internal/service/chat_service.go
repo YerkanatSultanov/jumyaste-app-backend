@@ -4,6 +4,8 @@ import (
 	"errors"
 	"jumyste-app-backend/internal/entity"
 	"jumyste-app-backend/internal/repository"
+	"jumyste-app-backend/pkg/logger"
+	"log/slog"
 )
 
 type ChatService struct {
@@ -56,5 +58,19 @@ func (s *ChatService) GetAllChats() ([]entity.Chat, error) {
 	if err != nil {
 		return nil, err
 	}
+	return chats, nil
+}
+
+// GetChatsByUserID - Получает чаты, в которых участвует пользователь
+func (s *ChatService) GetChatsByUserID(userID int) ([]entity.Chat, error) {
+	logger.Log.Info("Fetching chats for user", slog.Int("user_id", userID))
+
+	chats, err := s.ChatRepo.GetChatsByUserID(userID)
+	if err != nil {
+		logger.Log.Error("Failed to fetch user chats", slog.Int("user_id", userID), slog.String("error", err.Error()))
+		return nil, err
+	}
+
+	logger.Log.Info("Successfully fetched user chats", slog.Int("user_id", userID), slog.Int("chat_count", len(chats)))
 	return chats, nil
 }
