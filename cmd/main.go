@@ -26,9 +26,8 @@ func main() {
 
 	logger.Log.Info("Starting application...")
 
-	app := applicator.NewApp()
-
 	auth := middleware.NewAuthMiddleware(config.AppConfig)
+	app := applicator.NewApp(auth)
 
 	r := router.SetupRouter(
 		app.AuthHandler,
@@ -38,6 +37,7 @@ func main() {
 		app.MessageHandler,
 		app.ResumeHandler,
 		auth,
+		app.WSHandler,
 	)
 
 	serverPort := config.AppConfig.Server.Port

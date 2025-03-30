@@ -73,6 +73,29 @@ func (m *AuthMiddleware) validateToken(tokenString string) (*CustomClaims, error
 
 	return claims, nil
 }
+func (m *AuthMiddleware) VerifyTokenWithClaims(tokenString string) (*CustomClaims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return []byte(m.secretKey), nil
+	})
+
+	if err != nil {
+		if errors.Is(err, jwt.ErrTokenExpired) {
+			return nil, ErrExpiredToken
+		}
+		return nil, ErrInvalidToken
+	}
+
+	claims, ok := token.Claims.(*CustomClaims)
+	if !ok || !token.Valid {
+		return nil, ErrInvalidToken
+	}
+
+	if claims.ExpiresAt.Before(time.Now()) {
+		return nil, ErrExpiredToken
+	}
+
+	return claims, nil
+}
 
 type CustomClaims struct {
 	UserID int `json:"user_id"`

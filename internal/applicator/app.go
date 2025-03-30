@@ -4,10 +4,11 @@ import (
 	"jumyste-app-backend/internal/ai"
 	"jumyste-app-backend/internal/database"
 	"jumyste-app-backend/internal/handler"
+	"jumyste-app-backend/internal/manager"
+	"jumyste-app-backend/internal/middleware"
 	"jumyste-app-backend/internal/repository"
 	"jumyste-app-backend/internal/service"
 	"jumyste-app-backend/pkg/logger"
-	//"github.com/redis/go-redis/v9"
 )
 
 type App struct {
@@ -26,15 +27,14 @@ type App struct {
 	//RedisClient *redis.Client
 	ChatHandler    *handler.ChatHandler
 	MessageHandler *handler.MessageHandler
+	WSManager      *manager.WebSocketManager
+	WSHandler      *handler.WebSocketHandler
 }
 
-func NewApp() *App {
+func NewApp(authMiddleware *middleware.AuthMiddleware) *App {
 	logger.Log.Info("Initializing database...")
 	database.InitDB()
 	database.RunMigrations()
-
-	//logger.Log.Info("Initializing Redis...")
-	////redisClient := redisPkg.InitRedis()
 
 	logger.Log.Info("Initializing AI client...")
 	aiClient := ai.NewOpenAIClient()
@@ -54,13 +54,18 @@ func NewApp() *App {
 	messageService := service.NewMessageService(messageRepo)
 	resumeService := service.NewResumeService(aiClient)
 
+	logger.Log.Info("Initializing WebSocket manager...")
+	wsManager := manager.NewWebSocketManager()
+	go wsManager.Run()
+
 	logger.Log.Info("Initializing handlers...")
 	authHandler := handler.NewAuthHandler(authService)
 	userHandler := handler.NewUserHandler(userService)
 	vacancyHandler := handler.NewVacancyHandler(vacancyService)
 	chatHandler := handler.NewChatHandler(chatService)
-	messageHandler := handler.NewMessageHandler(messageService)
+	messageHandler := handler.NewMessageHandler(messageService, wsManager)
 	resumeHandler := handler.NewResumeHandler(resumeService)
+	wsHandler := handler.NewWebSocketHandler(wsManager, authMiddleware)
 
 	logger.Log.Info("Application initialized successfully")
 
@@ -79,6 +84,7 @@ func NewApp() *App {
 		MessageHandler: messageHandler,
 		ResumeHandler:  resumeHandler,
 		AIClient:       aiClient,
-		//RedisClient: redisClient,
+		WSManager:      wsManager,
+		WSHandler:      wsHandler,
 	}
 }

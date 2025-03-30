@@ -3,6 +3,8 @@ package repository
 import (
 	"database/sql"
 	"jumyste-app-backend/internal/entity"
+	"jumyste-app-backend/pkg/logger"
+	"log/slog"
 	"time"
 )
 
@@ -15,8 +17,8 @@ func NewMessageRepository(db *sql.DB) *MessageRepository {
 }
 
 func (r *MessageRepository) CreateMessage(message *entity.Message) (int, error) {
-	query := `INSERT INTO messages (chat_id, sender_id, type, content, file_url, created_at)
-	          VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`
+	query := `INSERT INTO messages (chat_id, sender_id, type, content, file_url, read_by, created_at)
+	          VALUES ($1, $2, $3, $4, $5, '{}', $6) RETURNING id`
 
 	var messageID int
 
@@ -75,4 +77,19 @@ func (r *MessageRepository) GetMessageByID(messageID int) (*entity.Message, erro
 	}
 
 	return &message, nil
+}
+
+func (r *MessageRepository) MarkMessageAsRead(messageID, userID int) error {
+	query := `
+		UPDATE messages 
+		SET read_by = array_append(read_by, $1) 
+		WHERE id = $2 AND NOT ($1 = ANY(read_by))`
+
+	_, err := r.DB.Exec(query, userID, messageID)
+	if err != nil {
+		logger.Log.Error("Failed to mark message as read", slog.Int("message_id", messageID), slog.Int("user_id", userID), slog.String("error", err.Error()))
+		return err
+	}
+
+	return nil
 }

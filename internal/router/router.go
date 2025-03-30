@@ -17,12 +17,14 @@ func SetupRouter(
 	messageHandler *handler.MessageHandler,
 	resumeHandler *handler.ResumeHandler,
 	authMiddleware *middleware.AuthMiddleware,
+	wsHandler *handler.WebSocketHandler,
 ) *gin.Engine {
 	r := gin.Default()
 	r.Use(middleware.CORSMiddleware())
 
 	r.GET("api/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
+	// --- Аутентификация ---
 	auth := r.Group("/api/auth")
 	{
 		auth.POST("/register", authHandler.Register)
@@ -32,6 +34,7 @@ func SetupRouter(
 		auth.POST("/reset-password", authHandler.ResetPassword)
 	}
 
+	// --- Пользователи ---
 	protected := r.Group("/api/users")
 	protected.Use(authMiddleware.VerifyTokenMiddleware())
 
@@ -41,6 +44,7 @@ func SetupRouter(
 		// users.DELETE("/me", userHandler.DeleteUser)
 	}
 
+	// --- Вакансии (только для роли 2) ---
 	vacancyRoutes := r.Group("/api/vacancies")
 	vacancyRoutes.Use(authMiddleware.VerifyTokenMiddleware())
 	vacancyRoutes.Use(middleware.RequireRole(2))
@@ -53,25 +57,35 @@ func SetupRouter(
 		vacancyRoutes.GET("/search", vacancyHandler.SearchVacancies)
 	}
 
+	// --- Чаты ---
 	chatRoutes := r.Group("/api/chats")
-	chatRoutes.Use(middleware.AuthMiddlewares())
+	chatRoutes.Use(authMiddleware.VerifyTokenMiddleware()) // Было неправильно
 	{
 		chatRoutes.POST("/", chatHandler.CreateChatHandler)
 		chatRoutes.GET("/:chatID", chatHandler.GetChatByIDHandler)
 		chatRoutes.GET("/", chatHandler.GetAllChatsHandler)
 	}
 
+	// --- Сообщения ---
 	messageRoutes := r.Group("/api/messages")
-	messageRoutes.Use(middleware.AuthMiddlewares())
+	messageRoutes.Use(authMiddleware.VerifyTokenMiddleware()) // Было неправильно
 	{
 		messageRoutes.POST("/", messageHandler.SendMessageHandler)
 		messageRoutes.GET("/chat/:chatID", messageHandler.GetMessagesByChatIDHandler)
 		messageRoutes.GET("/:messageID", messageHandler.GetMessageByIDHandler)
+		messageRoutes.POST("/read", messageHandler.MarkAsRead) // Фикс пути
 	}
+
+	// --- Резюме ---
 	resume := r.Group("/api/resume")
 	resume.Use(authMiddleware.VerifyTokenMiddleware())
 	{
 		resume.POST("/upload", resumeHandler.UploadResume)
 	}
+
+	// --- WebSocket ---
+	ws := r.Group("/api")
+	ws.GET("/ws", wsHandler.HandleWebSocket)
+
 	return r
 }

@@ -1,37 +1,49 @@
 package manager
 
 import (
+	"encoding/json"
 	"github.com/gorilla/websocket"
 	"log"
 	"sync"
 )
 
-// Client represents a WebSocket connection
+// Client представляет соединение WebSocket с пользователем
 type Client struct {
-	Conn *websocket.Conn
-	Send chan []byte
+	Conn   *websocket.Conn
+	Send   chan []byte
+	UserID int
+	ChatID int
 }
 
-// WebSocketManager handles all active connections
+// WebSocketManager управляет всеми соединениями
 type WebSocketManager struct {
 	Clients    map[*Client]bool
 	Broadcast  chan []byte
+	MarkAsRead chan ReadMessage
 	Register   chan *Client
 	Unregister chan *Client
 	mu         sync.Mutex
 }
 
-// NewWebSocketManager initializes a WebSocket manager
+// ReadMessage структура для события "прочтено"
+type ReadMessage struct {
+	MessageID int `json:"message_id"`
+	UserID    int `json:"user_id"`
+	ChatID    int `json:"chat_id"`
+}
+
+// NewWebSocketManager инициализирует менеджер WebSocket
 func NewWebSocketManager() *WebSocketManager {
 	return &WebSocketManager{
 		Clients:    make(map[*Client]bool),
 		Broadcast:  make(chan []byte),
+		MarkAsRead: make(chan ReadMessage),
 		Register:   make(chan *Client),
 		Unregister: make(chan *Client),
 	}
 }
 
-// Run starts the WebSocket manager
+// Run запускает WebSocket менеджер
 func (manager *WebSocketManager) Run() {
 	for {
 		select {
@@ -59,11 +71,28 @@ func (manager *WebSocketManager) Run() {
 				}
 			}
 			manager.mu.Unlock()
+
+		case readMsg := <-manager.MarkAsRead:
+			manager.mu.Lock()
+			// Рассылаем событие "прочитано" всем клиентам в этом чате
+			readEvent, _ := json.Marshal(map[string]interface{}{
+				"type":       "message_read",
+				"message_id": readMsg.MessageID,
+				"user_id":    readMsg.UserID,
+				"chat_id":    readMsg.ChatID,
+			})
+
+			for client := range manager.Clients {
+				if client.ChatID == readMsg.ChatID {
+					client.Send <- readEvent
+				}
+			}
+			manager.mu.Unlock()
 		}
 	}
 }
 
-// HandleClient manages an individual WebSocket connection
+// HandleClient обрабатывает сообщения от клиента
 func (manager *WebSocketManager) HandleClient(client *Client) {
 	defer func() {
 		manager.Unregister <- client
@@ -73,14 +102,31 @@ func (manager *WebSocketManager) HandleClient(client *Client) {
 	for {
 		_, message, err := client.Conn.ReadMessage()
 		if err != nil {
-			log.Println("Error reading:", err)
+			log.Println("Ошибка чтения сообщения:", err)
 			break
 		}
-		manager.Broadcast <- message
+
+		// Попробуем распарсить сообщение как "прочитано"
+		var readMsg ReadMessage
+		if err := json.Unmarshal(message, &readMsg); err == nil && readMsg.MessageID > 0 {
+			readMsg.UserID = client.UserID
+			readMsg.ChatID = client.ChatID
+			manager.MarkAsRead <- readMsg
+			continue
+		}
+
+		// Если не "прочитано", то отправляем в чат
+		manager.mu.Lock()
+		for c := range manager.Clients {
+			if c.ChatID == client.ChatID {
+				c.Send <- message
+			}
+		}
+		manager.mu.Unlock()
 	}
 }
 
-// WriteMessages sends messages to the client
+// WriteMessages отправляет сообщения клиенту
 func (client *Client) WriteMessages() {
 	defer client.Conn.Close()
 	for message := range client.Send {
