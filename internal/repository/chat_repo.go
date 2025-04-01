@@ -131,7 +131,7 @@ func (r *ChatRepository) GetChatsByUserID(userID int) ([]entity.Chat, error) {
 		    c.updated_at,
 		    COALESCE(m.content, '') AS last_message, 
 		    m.created_at AS last_message_at,
-		    ($1 = ANY(m.read_by)) AS is_read
+		    COALESCE(($1 = ANY(m.read_by)), false) AS is_read  -- ✅ Исправлено!
 		FROM chats c
 		JOIN chat_users cu ON c.id = cu.chat_id
 		LEFT JOIN (
@@ -155,7 +155,7 @@ func (r *ChatRepository) GetChatsByUserID(userID int) ([]entity.Chat, error) {
 		var chat entity.Chat
 		var lastMessage string
 		var lastMessageAt sql.NullTime
-		var isRead bool
+		var isRead sql.NullBool // ✅ Используем sql.NullBool
 
 		if err := rows.Scan(&chat.ID, &chat.CreatedAt, &chat.UpdatedAt, &lastMessage, &lastMessageAt, &isRead); err != nil {
 			return nil, err
@@ -165,7 +165,7 @@ func (r *ChatRepository) GetChatsByUserID(userID int) ([]entity.Chat, error) {
 		if lastMessageAt.Valid {
 			chat.LastMessageAt = lastMessageAt.Time
 		}
-		chat.IsRead = isRead
+		chat.IsRead = isRead.Valid && isRead.Bool
 
 		users, err := r.GetUsersByChatID(chat.ID, userID)
 		if err != nil {
