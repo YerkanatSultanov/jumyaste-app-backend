@@ -2,6 +2,7 @@ package handler
 
 import (
 	"github.com/gin-gonic/gin"
+	"jumyste-app-backend/internal/dto"
 	"jumyste-app-backend/internal/service"
 	"net/http"
 	"strconv"
@@ -18,7 +19,19 @@ func NewChatHandler(chatService *service.ChatService) *ChatHandler {
 // CreateChatHandler - Creates chat with received ID's
 func (h *ChatHandler) CreateChatHandler(c *gin.Context) {
 	var req struct {
-		Users []uint `json:"users"`
+		SecondUserId int `json:"second_user_id"`
+	}
+
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, dto.ErrorResponse{Error: "Unauthorized"})
+		return
+	}
+
+	id, ok := userID.(int)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: "Invalid user ID type"})
+		return
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -26,7 +39,7 @@ func (h *ChatHandler) CreateChatHandler(c *gin.Context) {
 		return
 	}
 
-	chat, err := h.ChatService.CreateChat(req.Users)
+	chat, err := h.ChatService.CreateChat(req.SecondUserId, id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

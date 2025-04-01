@@ -23,6 +23,7 @@ type Message struct {
 	Content   *string       `json:"content,omitempty"`
 	FileURL   *string       `json:"file_url,omitempty"`
 	ReadBy    pq.Int64Array `gorm:"type:integer[]" json:"read_by"`
+	IsMine    bool          `gorm:"type:boolean" json:"is_mine"`
 	CreatedAt time.Time     `json:"created_at"`
 	UpdatedAt time.Time     `json:"updated_at"`
 }

@@ -102,7 +102,7 @@ func (r *ChatRepository) GetAllChats() ([]entity.Chat, error) {
 	return chats, nil
 }
 
-func (r *ChatRepository) GetUsersByIDs(userIDs []uint) ([]entity.UserResponse, error) {
+func (r *ChatRepository) GetUsersByIDs(userIDs []int) ([]entity.UserResponse, error) {
 	query := "SELECT id, first_name, last_name, email FROM users WHERE id = ANY($1)"
 	rows, err := r.DB.Query(query, pq.Array(userIDs))
 	if err != nil {

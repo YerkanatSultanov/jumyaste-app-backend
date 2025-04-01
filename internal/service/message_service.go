@@ -26,6 +26,7 @@ func (s *MessageService) SendMessage(chatID, senderID int, msgType entity.Messag
 		Content:  content,
 		FileURL:  fileURL,
 		ReadBy:   pq.Int64Array{},
+		IsMine:   true,
 	}
 
 	messageID, err := s.MessageRepo.CreateMessage(message)
@@ -40,8 +41,17 @@ func (s *MessageService) SendMessage(chatID, senderID int, msgType entity.Messag
 }
 
 // GetMessagesByChatID - Fetch all messages from a chat
-func (s *MessageService) GetMessagesByChatID(chatID int) ([]entity.Message, error) {
-	return s.MessageRepo.GetMessagesByChatID(chatID)
+func (s *MessageService) GetMessagesByChatID(chatID, userID int) ([]entity.Message, error) {
+	messages, err := s.MessageRepo.GetMessagesByChatID(chatID)
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range messages {
+		messages[i].IsMine = messages[i].SenderID == userID
+	}
+
+	return messages, nil
 }
 
 // GetMessageByID - Fetch a message by ID

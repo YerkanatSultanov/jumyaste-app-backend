@@ -17,23 +17,25 @@ func NewChatService(chatRepo *repository.ChatRepository) *ChatService {
 }
 
 // CreateChat - Creates a new chat
-func (s *ChatService) CreateChat(userIDs []uint) (*entity.Chat, error) {
-	if len(userIDs) == 0 {
-		return nil, errors.New("at least one user must be provided")
+func (s *ChatService) CreateChat(userId, secondUserId int) (*entity.Chat, error) {
+	if userId == 0 || secondUserId == 0 {
+		return nil, errors.New("both users must be provided")
 	}
 
-	users, err := s.ChatRepo.GetUsersByIDs(userIDs)
+	// Проверяем, существуют ли пользователи
+	users, err := s.ChatRepo.GetUsersByIDs([]int{userId, secondUserId})
 	if err != nil {
 		return nil, err
 	}
-	if len(users) != len(userIDs) {
-		return nil, errors.New("one or more users do not exist")
+	if len(users) != 2 {
+		return nil, errors.New("one or both users do not exist")
 	}
 
 	chat := &entity.Chat{
 		Users: users,
 	}
 
+	// Создаём чат
 	chatID, err := s.ChatRepo.CreateChat(chat)
 	if err != nil {
 		return nil, err

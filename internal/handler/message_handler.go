@@ -57,23 +57,39 @@ func (h *MessageHandler) SendMessageHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send message"})
 		return
 	}
-
-	if content != "" {
-		h.WSManager.Broadcast <- []byte(content)
+	messageData := gin.H{
+		"id":         message.ID,
+		"chat_id":    message.ChatID,
+		"sender_id":  message.SenderID,
+		"type":       message.Type,
+		"content":    message.Content,
+		"file_url":   message.FileURL,
+		"read_by":    message.ReadBy,
+		"created_at": message.CreatedAt,
+		"updated_at": message.UpdatedAt,
+		"is_mine":    message.SenderID == sender,
 	}
 
-	c.JSON(http.StatusCreated, message)
+	h.WSManager.Broadcast <- toJSON(messageData)
+
+	c.JSON(http.StatusCreated, messageData)
 }
 
 // GetMessagesByChatIDHandler - Retrieves all messages in a chat
 func (h *MessageHandler) GetMessagesByChatIDHandler(c *gin.Context) {
-	chatID, err := strconv.ParseUint(c.Param("chatID"), 10, 64)
+	chatID, err := strconv.Atoi(c.Param("chatID"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid chat ID"})
 		return
 	}
 
-	messages, err := h.MessageService.GetMessagesByChatID(int(chatID))
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	messages, err := h.MessageService.GetMessagesByChatID(chatID, userID.(int))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch messages"})
 		return

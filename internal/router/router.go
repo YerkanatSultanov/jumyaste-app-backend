@@ -59,7 +59,7 @@ func SetupRouter(
 
 	// --- Чаты ---
 	chatRoutes := r.Group("/api/chats")
-	chatRoutes.Use(authMiddleware.VerifyTokenMiddleware()) // Было неправильно
+	chatRoutes.Use(authMiddleware.VerifyTokenMiddleware())
 	{
 		chatRoutes.POST("/", chatHandler.CreateChatHandler)
 		chatRoutes.GET("/:chatID", chatHandler.GetChatByIDHandler)
@@ -69,12 +69,12 @@ func SetupRouter(
 
 	// --- Сообщения ---
 	messageRoutes := r.Group("/api/messages")
-	messageRoutes.Use(authMiddleware.VerifyTokenMiddleware()) // Было неправильно
+	messageRoutes.Use(authMiddleware.VerifyTokenMiddleware())
 	{
 		messageRoutes.POST("/", messageHandler.SendMessageHandler)
 		messageRoutes.GET("/chat/:chatID", messageHandler.GetMessagesByChatIDHandler)
 		messageRoutes.GET("/:messageID", messageHandler.GetMessageByIDHandler)
-		messageRoutes.POST("/read", messageHandler.MarkAsRead) // Фикс пути
+		messageRoutes.POST("/read", messageHandler.MarkAsRead)
 	}
 
 	// --- Резюме ---
