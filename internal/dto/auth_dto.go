@@ -5,7 +5,6 @@ type RegisterUserRequest struct {
 	Password  string `json:"password" binding:"required" example:"securepassword"`
 	FirstName string `json:"first_name" binding:"required" example:"John"`
 	LastName  string `json:"last_name" binding:"required" example:"Doe"`
-	RoleID    int    `json:"role_id" example:"3"`
 }
 
 type LoginRequest struct {
@@ -34,4 +33,12 @@ type ResetPasswordRequest struct {
 
 type ResetPasswordResponse struct {
 	Message string `json:"message" example:"Password reset successful"`
+}
+type RegisterHRRequest struct {
+	Email     string `json:"email" binding:"required,email"`
+	Password  string `json:"password" binding:"required,min=6"`
+	FirstName string `json:"first_name" binding:"required"`
+	LastName  string `json:"last_name" binding:"required"`
+	DepID     int    `json:"dep_id" binding:"required"`
+	CompanyID int    `json:"company_id" binding:"required"`
 }

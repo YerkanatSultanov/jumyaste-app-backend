@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/redis/go-redis/v9"
@@ -10,16 +11,24 @@ import (
 	"jumyste-app-backend/pkg/mail"
 	"jumyste-app-backend/utils"
 	"log/slog"
+	"strconv"
 	"time"
 )
 
 type AuthService struct {
-	repo  *repository.AuthRepository
-	redis *redis.Client
+	repo           *repository.AuthRepository
+	redis          *redis.Client
+	invitationRepo *repository.InvitationRepository
+	hrRepo         *repository.HrRepository
 }
 
-func NewAuthService(repo *repository.AuthRepository) *AuthService {
-	return &AuthService{repo: repo}
+func NewAuthService(repo *repository.AuthRepository, redis *redis.Client, invitationRepo *repository.InvitationRepository, hrRepo *repository.HrRepository) *AuthService {
+	return &AuthService{
+		repo:           repo,
+		redis:          redis,
+		invitationRepo: invitationRepo,
+		hrRepo:         hrRepo,
+	}
 }
 
 var (
@@ -27,74 +36,49 @@ var (
 	ErrUserNotFound     = errors.New("user not found")
 )
 
-//func (s *AuthService) RegisterUser(email, password, firstName, lastName string) error {
-//	logger.Log.Info("Starting user registration",
-//		slog.String("email", email),
-//		slog.String("Name", firstName))
-//
-//	exists, err := s.repo.UserExistsByEmail(email)
-//	if err != nil {
-//		logger.Log.Error("Error checking user existence",
-//			slog.String("email", email),
-//			slog.String("error", err.Error()))
-//		return err
-//	}
-//	if exists {
-//		logger.Log.Warn("Registration attempt for existing user",
-//			slog.String("email", email))
-//		return errors.New("user with this email already exists")
-//	}
-//
-//	hashedPassword, err := utils.HashPassword(password)
-//	if err != nil {
-//		logger.Log.Error("Failed to hash password", slog.String("error", err.Error()))
-//		return err
-//	}
-//
-//	user := &entity.User{
-//		Email:     email,
-//		FirstName: firstName,
-//		LastName:  lastName,
-//		Password:  hashedPassword,
-//	}
-//
-//	err = s.repo.CreateUser(user)
-//	if err != nil {
-//		logger.Log.Error("Failed to create user",
-//			slog.String("email", email),
-//			slog.String("error", err.Error()))
-//		return err
-//	}
-//
-//	logger.Log.Info("User registered successfully",
-//		slog.String("email", email),
-//		slog.String("name", firstName))
-//
-//	return nil
-//}
-
-func (s *AuthService) LoginUser(email, password string) (string, error) {
+func (s *AuthService) LoginUser(email, password string) (string, string, error) {
 	logger.Log.Info("Attempting user login", slog.String("email", email))
 
 	user, err := s.repo.GetUserByEmail(email)
 	if err != nil {
-		logger.Log.Warn("Login failed: user not found", slog.String("email", email))
-		return "", errors.New("invalid credentials")
+		logger.Log.Warn("Login failed: user not found", slog.String("email", email), slog.String("error", err.Error()))
+		return "", "", errors.New("invalid credentials")
 	}
 
 	if !utils.CheckPassword(password, user.Password) {
 		logger.Log.Warn("Login failed: incorrect password", slog.String("email", email))
-		return "", errors.New("invalid credentials")
+		return "", "", errors.New("invalid credentials")
 	}
 
-	token, err := utils.GenerateJWT(user.ID, user.RoleID)
+	hr, err := s.hrRepo.GetHRByUserID(user.ID)
 	if err != nil {
-		logger.Log.Error("Failed to generate JWT", slog.String("error", err.Error()))
-		return "", err
+		logger.Log.Warn("HR data not found for user", slog.Int("user_id", user.ID), slog.String("error", err.Error()))
+		user.CompanyID = 0
+		user.DepID = 0
+	} else {
+		user.CompanyID = hr.CompanyID
+		user.DepID = hr.DepID
 	}
 
-	logger.Log.Info("User logged in successfully", slog.String("email", email))
-	return token, nil
+	accessToken, err := utils.GenerateJWT(user.ID, user.RoleId, user.CompanyID, user.DepID)
+	if err != nil {
+		logger.Log.Error("Failed to generate JWT", slog.String("email", email), slog.String("error", err.Error()))
+		return "", "", err
+	}
+
+	refreshToken, err := utils.GenerateRefreshToken(user.ID, user.RoleId, user.CompanyID, user.DepID)
+	if err != nil {
+		logger.Log.Error("Failed to generate refresh token", slog.String("email", email), slog.String("error", err.Error()))
+		return "", "", err
+	}
+
+	err = s.SaveRefreshToken(user.ID, refreshToken)
+	if err != nil {
+		logger.Log.Error("Failed to save refresh token to Redis", slog.String("email", email), slog.String("error", err.Error()))
+		return "", "", err
+	}
+
+	return accessToken, refreshToken, nil
 }
 
 func (s *AuthService) RequestPasswordReset(email string) error {
@@ -177,103 +161,122 @@ func (s *AuthService) ResetPassword(email, resetCode, newPassword, confirmPasswo
 }
 
 func (s *AuthService) RegisterUser(userReq *entity.User) error {
-	logger.Log.Info("Registering user and sending verification code", slog.String("email", userReq.Email))
+	logger.Log.Info("Registering user", slog.String("email", userReq.Email))
 
 	exists, err := s.repo.UserExistsByEmail(userReq.Email)
 	if err != nil {
-		logger.Log.Error("Error checking user existence", slog.String("email", userReq.Email), slog.String("error", err.Error()))
 		return err
 	}
 	if exists {
 		return errors.New("user with this email already exists")
 	}
 
-	//verificationCode := utils.GenerateResetCode()
-
 	hashedPassword, err := utils.HashPassword(userReq.Password)
 	if err != nil {
-		logger.Log.Error("Failed to hash password", slog.String("error", err.Error()))
 		return err
 	}
+
 	user := &entity.User{
 		Email:     userReq.Email,
 		Password:  hashedPassword,
 		FirstName: userReq.FirstName,
 		LastName:  userReq.LastName,
-		RoleID:    userReq.RoleID,
+		RoleId:    1,
 	}
 
 	err = s.repo.CreateUser(user)
 	if err != nil {
-		logger.Log.Error("Failed to create user", slog.String("email", userReq.Email), slog.String("error", err.Error()))
 		return err
 	}
+
 	logger.Log.Info("User registered successfully", slog.String("email", userReq.Email))
-
-	//ctx := context.Background()
-	//key := fmt.Sprintf("pending_registration:%s", email)
-	//userData := map[string]interface{}{
-	//	"email":     email,
-	//	"password":  hashedPassword,
-	//	"firstName": firstName,
-	//	"lastName":  lastName,
-	//}
-	//err = s.redis.HMSet(ctx, key, userData).Err()
-	//if err != nil {
-	//	logger.Log.Error("Failed to save user data in Redis", slog.String("email", email), slog.String("error", err.Error()))
-	//	return errors.New("failed to save user data")
-	//}
-	//
-	//s.redis.Expire(ctx, key, 10*time.Minute)
-	//
-	//go func() {
-	//	subject := "Verification Code"
-	//	body := fmt.Sprintf("Your verification code is: %s", verificationCode)
-	//
-	//	err := mail.SendEmail(email, subject, body)
-	//	if err != nil {
-	//		logger.Log.Error("Failed to send verification email", slog.String("email", email), slog.String("error", err.Error()))
-	//	} else {
-	//		logger.Log.Debug("Verification code sent successfully", slog.String("email", email))
-	//	}
-	//}()
-	//
-	//logger.Log.Info("User registration process started", slog.String("email", email))
-
 	return nil
 }
 
-//func (s *AuthService) VerifyCodeAndRegister(email, code string) error {
-//	ctx := context.Background()
-//	key := fmt.Sprintf("pending_registration:%s", email)
-//
-//	userData, err := s.redis.HGetAll(ctx, key).Result()
-//	if err != nil {
-//		return errors.New("failed to get registration data")
-//	}
-//	if len(userData) == 0 {
-//		return errors.New("registration data expired or not found")
-//	}
-//
-//	if userData["code"] != code {
-//		return errors.New("invalid verification code")
-//	}
-//
-//	user := &entity.User{
-//		Email:     userData["email"],
-//		Password:  userData["password"],
-//		FirstName: userData["firstName"],
-//		LastName:  userData["lastName"],
-//	}
-//
-//	err = s.repo.CreateUser(user)
-//	if err != nil {
-//		logger.Log.Error("Failed to create user", slog.String("email", email), slog.String("error", err.Error()))
-//		return err
-//	}
-//
-//	s.redis.Del(ctx, key)
-//
-//	logger.Log.Info("User registered successfully", slog.String("email", email))
-//	return nil
-//}
+func (s *AuthService) RegisterHR(userReq *entity.HRRegistration) error {
+	logger.Log.Info("Registering HR", slog.String("email", userReq.Email))
+
+	invitation, err := s.invitationRepo.GetInvitationByEmail(userReq.Email)
+	if err != nil {
+		return err
+	}
+	if invitation == nil {
+		return errors.New("no invitation found for this email")
+	}
+
+	exists, err := s.repo.UserExistsByEmail(userReq.Email)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return errors.New("user with this email already exists")
+	}
+
+	hashedPassword, err := utils.HashPassword(userReq.Password)
+	if err != nil {
+		return err
+	}
+
+	user := &entity.User{
+		Email:     userReq.Email,
+		Password:  hashedPassword,
+		FirstName: userReq.FirstName,
+		LastName:  userReq.LastName,
+		RoleId:    2,
+	}
+
+	err = s.repo.CreateUser(user)
+	if err != nil {
+		return err
+	}
+
+	hr := &entity.HR{
+		UserID:    user.ID,
+		DepID:     invitation.DepID,
+		CompanyID: invitation.CompanyID,
+	}
+
+	err = s.hrRepo.CreateHR(hr)
+	if err != nil {
+		return err
+	}
+
+	err = s.invitationRepo.DeleteInvitation(userReq.Email)
+	if err != nil {
+		logger.Log.Warn("Failed to delete invitation", slog.String("email", userReq.Email), slog.String("error", err.Error()))
+	}
+
+	logger.Log.Info("HR registered successfully", slog.String("email", userReq.Email))
+	return nil
+}
+
+func (s *AuthService) SaveRefreshToken(userID int, refreshToken string) error {
+	err := s.redis.Set(context.Background(), s.getRefreshTokenKey(userID), refreshToken, 24*time.Hour*7).Err()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *AuthService) GetRefreshToken(userID int) (string, error) {
+	refreshToken, err := s.redis.Get(context.Background(), s.getRefreshTokenKey(userID)).Result()
+	if errors.Is(err, redis.Nil) {
+		return "", errors.New("refresh token not found")
+	}
+	if err != nil {
+		return "", err
+	}
+	return refreshToken, nil
+}
+
+func (s *AuthService) DeleteRefreshToken(userID int) error {
+	err := s.redis.Del(context.Background(), s.getRefreshTokenKey(userID)).Err()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *AuthService) getRefreshTokenKey(userID int) string {
+	return "refresh_token:" + strconv.Itoa(userID)
+}

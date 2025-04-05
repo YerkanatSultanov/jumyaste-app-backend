@@ -34,6 +34,7 @@ func NewVacancyHandler(vacancyService *service.VacancyService) *VacancyHandler {
 // @Router /vacancies [post]
 func (h *VacancyHandler) CreateVacancy(c *gin.Context) {
 	userID := c.GetInt("user_id")
+	companyID := c.GetInt("company_id")
 
 	var vacancy entity.Vacancy
 	if err := c.ShouldBindJSON(&vacancy); err != nil {
@@ -43,6 +44,7 @@ func (h *VacancyHandler) CreateVacancy(c *gin.Context) {
 	}
 
 	vacancy.CreatedBy = userID
+	vacancy.CompanyId = companyID
 
 	logger.Log.Info("Creating vacancy", slog.Int("created_by", vacancy.CreatedBy), slog.String("title", vacancy.Title))
 
@@ -252,6 +254,19 @@ func (h *VacancyHandler) SearchVacancies(c *gin.Context) {
 	if len(vacancies) == 0 {
 		logger.Log.Info("No vacancies found for the given filters", "filter", filter)
 		c.JSON(http.StatusOK, gin.H{"message": "No vacancies found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, vacancies)
+}
+
+func (h *VacancyHandler) GetVacancyByCompanyID(c *gin.Context) {
+	companyId := c.GetInt("company_id")
+	vacancies, err := h.VacancyService.GetVacanciesByCompanyId(companyId)
+
+	if err != nil {
+		logger.Log.Error("Failed to retrieve HR vacancies", slog.Int("user_id", companyId), slog.String("error", err.Error()))
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: "Failed to retrieve vacancies"})
 		return
 	}
 

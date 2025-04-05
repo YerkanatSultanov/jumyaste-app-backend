@@ -46,6 +46,8 @@ func (m *AuthMiddleware) VerifyTokenMiddleware() gin.HandlerFunc {
 
 		c.Set("user_id", claims.UserID)
 		c.Set("role_id", claims.RoleID)
+		c.Set("company_id", claims.CompanyID)
+		c.Set("dep_id", claims.DepID)
 		c.Next()
 	}
 }
@@ -98,7 +100,9 @@ func (m *AuthMiddleware) VerifyTokenWithClaims(tokenString string) (*CustomClaim
 }
 
 type CustomClaims struct {
-	UserID int `json:"user_id"`
-	RoleID int `json:"role_id"`
+	UserID    int `json:"user_id"`
+	RoleID    int `json:"role_id"`
+	CompanyID int `json:"company_id,omitempty"`
+	DepID     int `json:"dep_id,omitempty"`
 	jwt.RegisteredClaims
 }

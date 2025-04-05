@@ -44,7 +44,7 @@ func (r *AuthRepository) CreateUser(user *entity.User) error {
 	logger.Log.Info("Creating new user", slog.String("email", user.Email))
 
 	query := "INSERT INTO users(email,password, first_name, last_name, profile_picture, role_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id"
-	err := r.db.QueryRow(query, user.Email, user.Password, user.FirstName, user.LastName, user.ProfilePicture, user.RoleID).Scan(&user.ID)
+	err := r.db.QueryRow(query, user.Email, user.Password, user.FirstName, user.LastName, user.ProfilePicture, user.RoleId).Scan(&user.ID)
 	if err != nil {
 		logger.Log.Error("Failed to insert user",
 			slog.String("email", user.Email),
@@ -61,7 +61,7 @@ func (r *AuthRepository) GetUserByEmail(email string) (*entity.User, error) {
 
 	var user entity.User
 	query := "SELECT id, email, password, first_name, last_name, profile_picture, role_id FROM users WHERE email = $1"
-	err := r.db.QueryRow(query, email).Scan(&user.ID, &user.Email, &user.Password, &user.FirstName, &user.LastName, &user.ProfilePicture, &user.RoleID)
+	err := r.db.QueryRow(query, email).Scan(&user.ID, &user.Email, &user.Password, &user.FirstName, &user.LastName, &user.ProfilePicture, &user.RoleId)
 	if err != nil {
 		logger.Log.Error("User not found",
 			slog.String("email", email),

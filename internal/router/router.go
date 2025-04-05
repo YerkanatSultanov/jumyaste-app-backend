@@ -18,26 +18,28 @@ func SetupRouter(
 	resumeHandler *handler.ResumeHandler,
 	authMiddleware *middleware.AuthMiddleware,
 	wsHandler *handler.WebSocketHandler,
+	invitationHandler *handler.InvitationHandler,
 ) *gin.Engine {
 	r := gin.Default()
 	r.Use(middleware.CORSMiddleware())
 
+	// Swagger documentation route
 	r.GET("api/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// --- Аутентификация ---
 	auth := r.Group("/api/auth")
 	{
-		auth.POST("/register", authHandler.Register)
-		//auth.POST("/verify-code", authHandler.VerifyCodeAndRegister)
+		auth.POST("/register", authHandler.RegisterUser)
+		auth.POST("/register-hr", authHandler.RegisterHR)
 		auth.POST("/login", authHandler.Login)
 		auth.POST("/forgot-password", authHandler.RequestPasswordReset)
 		auth.POST("/reset-password", authHandler.ResetPassword)
+		auth.POST("/refresh", authHandler.RefreshToken)
 	}
 
 	// --- Пользователи ---
 	protected := r.Group("/api/users")
 	protected.Use(authMiddleware.VerifyTokenMiddleware())
-
 	{
 		protected.GET("/me", userHandler.GetUser)
 		protected.PATCH("/me", userHandler.UpdateUser)
@@ -49,6 +51,7 @@ func SetupRouter(
 	vacancyRoutes.Use(authMiddleware.VerifyTokenMiddleware())
 	vacancyRoutes.Use(middleware.RequireRole(2))
 	{
+		vacancyRoutes.GET("/company", vacancyHandler.GetVacancyByCompanyID)
 		vacancyRoutes.POST("/", vacancyHandler.CreateVacancy)
 		vacancyRoutes.PUT("/:id", vacancyHandler.UpdateVacancy)
 		vacancyRoutes.DELETE("/:id", vacancyHandler.DeleteVacancy)
@@ -82,6 +85,13 @@ func SetupRouter(
 	resume.Use(authMiddleware.VerifyTokenMiddleware())
 	{
 		resume.POST("/upload", resumeHandler.UploadResume)
+	}
+
+	// --- Приглашения ---
+	invitations := r.Group("/api/invitations")
+	invitations.Use(authMiddleware.VerifyTokenMiddleware())
+	{
+		invitations.POST("/", invitationHandler.SendInvitationHandler)
 	}
 
 	// --- WebSocket ---

@@ -7,6 +7,7 @@ import (
 	"jumyste-app-backend/internal/entity"
 	"jumyste-app-backend/internal/service"
 	"jumyste-app-backend/pkg/logger"
+	"jumyste-app-backend/utils"
 	"log/slog"
 	"net/http"
 )
@@ -56,13 +57,16 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	token, err := h.AuthService.LoginUser(credentials.Email, credentials.Password)
+	accessToken, refreshToken, err := h.AuthService.LoginUser(credentials.Email, credentials.Password)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"token": token})
+	c.JSON(http.StatusOK, gin.H{
+		"access_token":  accessToken,
+		"refresh_token": refreshToken,
+	})
 }
 
 // RequestPasswordReset godoc
@@ -143,7 +147,46 @@ func (h *AuthHandler) ResetPassword(c *gin.Context) {
 // @Failure 400 {object} dto.ErrorResponse
 // @Failure 500 {object} dto.ErrorResponse
 // @Router /auth/register [post]
-func (h *AuthHandler) Register(c *gin.Context) {
+//func (h *AuthHandler) Register(c *gin.Context) {
+//	var request dto.RegisterUserRequest
+//
+//	if err := c.ShouldBindJSON(&request); err != nil {
+//		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+//		return
+//	}
+//
+//	if request.RoleID == 0 {
+//		request.RoleID = 3
+//	}
+//
+//	user := &entity.User{
+//		Email:     request.Email,
+//		Password:  request.Password,
+//		FirstName: request.FirstName,
+//		LastName:  request.LastName,
+//		//RoleID:    request.RoleID,
+//	}
+//
+//	if err := h.AuthService.RegisterUser(user); err != nil {
+//		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+//		return
+//	}
+//
+//	c.JSON(http.StatusOK, gin.H{"message": "User registered successfully"})
+//}
+
+// RegisterUser godoc
+// @Summary Register a new user
+// @Description Creates a new user account
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body dto.RegisterUserRequest true "User registration data"
+// @Success 200 {object} dto.SuccessResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /auth/register/user [post]
+func (h *AuthHandler) RegisterUser(c *gin.Context) {
 	var request dto.RegisterUserRequest
 
 	if err := c.ShouldBindJSON(&request); err != nil {
@@ -151,24 +194,82 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	if request.RoleID == 0 {
-		request.RoleID = 3
-	}
-
 	user := &entity.User{
 		Email:     request.Email,
 		Password:  request.Password,
 		FirstName: request.FirstName,
 		LastName:  request.LastName,
-		RoleID:    request.RoleID,
+		RoleId:    1,
 	}
 
 	if err := h.AuthService.RegisterUser(user); err != nil {
+		logger.Log.Error("Failed to register user", slog.String("email", request.Email), slog.String("error", err.Error()))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "User registered successfully"})
+}
+
+// RegisterHR godoc
+// @Summary Register a new HR
+// @Description Creates a new HR account (requires invitation)
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body dto.RegisterHRRequest true "HR registration data"
+// @Success 200 {object} dto.SuccessResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /auth/register/hr [post]
+func (h *AuthHandler) RegisterHR(c *gin.Context) {
+	var request dto.RegisterHRRequest
+
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		return
+	}
+
+	hrRegistration := &entity.HRRegistration{
+		Email:     request.Email,
+		Password:  request.Password,
+		FirstName: request.FirstName,
+		LastName:  request.LastName,
+		DepID:     request.DepID,
+		CompanyID: request.CompanyID,
+	}
+
+	if err := h.AuthService.RegisterHR(hrRegistration); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "HR registered successfully"})
+}
+
+func (h *AuthHandler) RefreshToken(c *gin.Context) {
+	var req struct {
+		RefreshToken string `json:"refresh_token"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil || req.RefreshToken == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Refresh token is required"})
+		return
+	}
+
+	claims, err := utils.ValidateRefreshToken(req.RefreshToken)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired refresh token"})
+		return
+	}
+
+	accessToken, err := utils.GenerateJWT(claims.UserID, claims.RoleID, claims.CompanyID, claims.DepartmentID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate access token"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"access_token": accessToken})
 }
 
 //func (h *AuthHandler) VerifyCodeAndRegister(c *gin.Context) {

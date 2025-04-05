@@ -16,6 +16,7 @@ type Vacancy struct {
 	Description    string    `json:"description"`
 	CreatedBy      int       `json:"created_by"`
 	CreatedAt      time.Time `json:"created_at"`
+	CompanyId      int       `json:"company_id"`
 }
 
 type VacancyFilter struct {
@@ -25,5 +26,6 @@ type VacancyFilter struct {
 	EmploymentType []string
 	WorkFormat     []string
 	Location       string
+	CompanyId      int
 	Query          string
 }

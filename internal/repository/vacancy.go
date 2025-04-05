@@ -20,8 +20,8 @@ func NewVacancyRepository(db *sql.DB) *VacancyRepository {
 func (r *VacancyRepository) CreateVacancy(v *entity.Vacancy) error {
 	query := `
         INSERT INTO vacancies 
-        (title, employment_type, work_format, experience, salary_min, salary_max, location, category, skills, description, created_by) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        (title, employment_type, work_format, experience, salary_min, salary_max, location, category, skills, description, created_by, company_id) 
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
         RETURNING id, created_at`
 
 	return r.db.QueryRow(
@@ -37,6 +37,7 @@ func (r *VacancyRepository) CreateVacancy(v *entity.Vacancy) error {
 		pq.Array(v.Skills),
 		v.Description,
 		v.CreatedBy,
+		v.CompanyId,
 	).Scan(&v.ID, &v.CreatedAt)
 }
 
@@ -61,7 +62,7 @@ func (r *VacancyRepository) UpdateVacancy(v *entity.Vacancy) error {
 func (r *VacancyRepository) GetVacancyById(id int) (*entity.Vacancy, error) {
 	query := `
 	SELECT id, title, employment_type, work_format, experience, salary_min,
-       salary_max, location, category, skills, description, created_by, created_at
+       salary_max, location, category, skills, description, created_by, created_at, company_id
 	FROM vacancies WHERE id = $1`
 
 	var vacancy entity.Vacancy
@@ -69,7 +70,7 @@ func (r *VacancyRepository) GetVacancyById(id int) (*entity.Vacancy, error) {
 		&vacancy.ID, &vacancy.Title, &vacancy.EmploymentType, &vacancy.WorkFormat,
 		&vacancy.Experience, &vacancy.SalaryMin, &vacancy.SalaryMax,
 		&vacancy.Location, &vacancy.Category, pq.Array(&vacancy.Skills),
-		&vacancy.Description, &vacancy.CreatedBy, &vacancy.CreatedAt,
+		&vacancy.Description, &vacancy.CreatedBy, &vacancy.CreatedAt, &vacancy.CompanyId,
 	)
 	if err != nil {
 		logger.Log.Error("Vacancy not found",
@@ -96,7 +97,7 @@ func (r *VacancyRepository) DeleteVacancy(id int) error {
 func (r *VacancyRepository) GetAllVacancies() ([]*entity.Vacancy, error) {
 	query := `
 	SELECT id, title, employment_type, work_format, experience, salary_min, 
-	       salary_max, location, category, skills, description, created_by, created_at
+	       salary_max, location, category, skills, description, created_by, created_at, company_id
 	FROM vacancies`
 
 	rows, err := r.db.Query(query)
@@ -110,7 +111,7 @@ func (r *VacancyRepository) GetAllVacancies() ([]*entity.Vacancy, error) {
 	for rows.Next() {
 		v := &entity.Vacancy{}
 		if err := rows.Scan(&v.ID, &v.Title, &v.EmploymentType, &v.WorkFormat, &v.Experience,
-			&v.SalaryMin, &v.SalaryMax, &v.Location, &v.Category, pq.Array(&v.Skills), &v.Description, &v.CreatedBy, &v.CreatedAt); err != nil {
+			&v.SalaryMin, &v.SalaryMax, &v.Location, &v.Category, pq.Array(&v.Skills), &v.Description, &v.CreatedBy, &v.CreatedAt, &v.CompanyId); err != nil {
 			logger.Log.Error("Failed to scan vacancy row", slog.String("error", err.Error()))
 			return nil, err
 		}
@@ -129,7 +130,7 @@ func (r *VacancyRepository) GetAllVacancies() ([]*entity.Vacancy, error) {
 func (r *VacancyRepository) GetVacanciesByRecruiterID(userID int) ([]*entity.Vacancy, error) {
 	query := `
 		SELECT id, title, employment_type, work_format, experience, salary_min, 
-		       salary_max, location, category, skills, description, created_by
+		       salary_max, location, category, skills, description, created_by, company_id
 		FROM vacancies 
 		WHERE created_by = $1`
 
@@ -144,7 +145,7 @@ func (r *VacancyRepository) GetVacanciesByRecruiterID(userID int) ([]*entity.Vac
 	for rows.Next() {
 		var v entity.Vacancy
 		if err := rows.Scan(&v.ID, &v.Title, &v.EmploymentType, &v.WorkFormat, &v.Experience,
-			&v.SalaryMin, &v.SalaryMax, &v.Location, &v.Category, pq.Array(&v.Skills), &v.Description, &v.CreatedBy); err != nil {
+			&v.SalaryMin, &v.SalaryMax, &v.Location, &v.Category, pq.Array(&v.Skills), &v.Description, &v.CreatedBy, &v.CompanyId); err != nil {
 			logger.Log.Error("Error scanning vacancy row", slog.String("error", err.Error()))
 			return nil, err
 		}
@@ -155,7 +156,7 @@ func (r *VacancyRepository) GetVacanciesByRecruiterID(userID int) ([]*entity.Vac
 }
 
 func (r *VacancyRepository) SearchVacancies(filter entity.VacancyFilter) ([]*entity.Vacancy, error) {
-	query := `SELECT id, title, employment_type, work_format, experience, salary_min, salary_max, location, category, skills, description, created_by FROM vacancies WHERE 1=1`
+	query := `SELECT id, title, employment_type, work_format, experience, salary_min, salary_max, location, category, skills, description, created_by, company_id FROM vacancies WHERE 1=1`
 	var args []interface{}
 	argIndex := 1
 
@@ -195,6 +196,12 @@ func (r *VacancyRepository) SearchVacancies(filter entity.VacancyFilter) ([]*ent
 		argIndex++
 	}
 
+	if filter.CompanyId != 0 {
+		query += fmt.Sprintf(" AND company_id = $%d", argIndex)
+		args = append(args, filter.CompanyId)
+		argIndex++
+	}
+
 	if filter.Query != "" {
 		query += fmt.Sprintf(" AND search_vector @@ plainto_tsquery('russian', $%d)", argIndex)
 		args = append(args, filter.Query)
@@ -210,12 +217,59 @@ func (r *VacancyRepository) SearchVacancies(filter entity.VacancyFilter) ([]*ent
 	var vacancies []*entity.Vacancy
 	for rows.Next() {
 		var vacancy entity.Vacancy
-		err := rows.Scan(&vacancy.ID, &vacancy.Title, &vacancy.EmploymentType, &vacancy.WorkFormat, &vacancy.Experience, &vacancy.SalaryMin, &vacancy.SalaryMax, &vacancy.Location, &vacancy.Category, pq.Array(&vacancy.Skills), &vacancy.Description, &vacancy.CreatedBy)
+		err := rows.Scan(
+			&vacancy.ID,
+			&vacancy.Title,
+			&vacancy.EmploymentType,
+			&vacancy.WorkFormat,
+			&vacancy.Experience,
+			&vacancy.SalaryMin,
+			&vacancy.SalaryMax,
+			&vacancy.Location,
+			&vacancy.Category,
+			pq.Array(&vacancy.Skills),
+			&vacancy.Description,
+			&vacancy.CreatedBy,
+			&vacancy.CompanyId,
+		)
 		if err != nil {
 			return nil, err
 		}
 		vacancies = append(vacancies, &vacancy)
 	}
 
+	return vacancies, nil
+}
+
+func (r *VacancyRepository) GetVacanciesByCompany(companyID int) ([]*entity.Vacancy, error) {
+	query := `SELECT id, title, employment_type, work_format, experience, salary_min, 
+                  salary_max, location, category, skills, description, created_by, created_at , company_id
+                  FROM vacancies WHERE company_id = $1`
+
+	rows, err := r.db.Query(query, companyID)
+	if err != nil {
+		logger.Log.Error("Failed to retrieve vacancies by company", slog.Int("company_id", companyID), slog.String("error", err.Error()))
+		return nil, err
+	}
+	defer rows.Close()
+
+	var vacancies []*entity.Vacancy
+	for rows.Next() {
+		v := &entity.Vacancy{}
+		if err := rows.Scan(&v.ID, &v.Title, &v.EmploymentType, &v.WorkFormat, &v.Experience,
+			&v.SalaryMin, &v.SalaryMax, &v.Location, &v.Category, pq.Array(&v.Skills),
+			&v.Description, &v.CreatedBy, &v.CreatedAt, &v.CompanyId); err != nil {
+			logger.Log.Error("Failed to scan vacancy row", slog.String("error", err.Error()))
+			return nil, err
+		}
+		vacancies = append(vacancies, v)
+	}
+
+	if err := rows.Err(); err != nil {
+		logger.Log.Error("Error iterating through vacancies", slog.String("error", err.Error()))
+		return nil, err
+	}
+
+	logger.Log.Info("Vacancies retrieved successfully", slog.Int("company_id", companyID), slog.Int("count", len(vacancies)))
 	return vacancies, nil
 }

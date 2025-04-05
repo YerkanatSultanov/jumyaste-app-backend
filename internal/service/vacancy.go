@@ -107,3 +107,14 @@ func (s *VacancyService) SearchVacancies(filter entity.VacancyFilter) ([]*entity
 
 	return vacancies, nil
 }
+
+func (s *VacancyService) GetVacanciesByCompanyId(companyId int) ([]*entity.Vacancy, error) {
+	logger.Log.Info("Fetching vacancies for company", slog.Int("company_id", companyId))
+	vacancies, err := s.repo.GetVacanciesByCompany(companyId)
+	if err != nil {
+		logger.Log.Error("Failed to retrieve vacancies for company", slog.String("error", err.Error()))
+		return nil, err
+	}
+
+	return vacancies, nil
+}

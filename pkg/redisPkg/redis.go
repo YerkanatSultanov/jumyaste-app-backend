@@ -2,26 +2,26 @@ package redisPkg
 
 import (
 	"context"
-	"fmt"
 	"github.com/redis/go-redis/v9"
 	"jumyste-app-backend/pkg/logger"
 	"os"
 )
 
 func InitRedis() *redis.Client {
-	redisAddr := fmt.Sprintf("%s:%s", os.Getenv("REDIS_HOST"), os.Getenv("REDIS_PORT"))
 	redisClient := redis.NewClient(&redis.Options{
-		Addr:     redisAddr,
-		Password: os.Getenv("REDIS_PASSWORD"),
+		Addr:     os.Getenv("REDIS_ADDR"),     // Пример: shortline.proxy.rlwy.net:20101
+		Username: os.Getenv("REDIS_USERNAME"), // default
+		Password: os.Getenv("REDIS_PASSWORD"), // IYcWcljTMbPGsEATRnPBzmRIAtSyKRlY
 		DB:       0,
 	})
 
 	ctx := context.Background()
 	_, err := redisClient.Ping(ctx).Result()
 	if err != nil {
-		logger.Log.Error("Failed to connect to Redis:", err)
+		logger.Log.Error("Failed to connect to Redis", "address", os.Getenv("REDIS_ADDR"), "error", err)
+		return nil
 	}
 
-	logger.Log.Info("Connected to Redis successfully", "address", redisAddr)
+	logger.Log.Info("Connected to Redis successfully", "address", os.Getenv("REDIS_ADDR"))
 	return redisClient
 }

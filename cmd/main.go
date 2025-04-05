@@ -38,6 +38,7 @@ func main() {
 		app.ResumeHandler,
 		auth,
 		app.WSHandler,
+		app.InvitationHandler,
 	)
 
 	serverPort := config.AppConfig.Server.Port
