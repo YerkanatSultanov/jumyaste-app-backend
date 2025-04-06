@@ -289,12 +289,6 @@ func (h *VacancyHandler) GetVacancyByID(c *gin.Context) {
 		return
 	}
 
-	if err := c.ShouldBindJSON(&vacancy); err != nil {
-		logger.Log.Error("Invalid vacancy input", slog.String("error", err.Error()))
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
-		return
-	}
-
-	logger.Log.Info(" Vacancy received successfully", slog.Int("vacancy_id", vacancyID))
+	logger.Log.Info("Vacancy retrieved successfully", slog.Int("vacancy_id", vacancy.ID))
 	c.JSON(http.StatusOK, vacancy)
 }
