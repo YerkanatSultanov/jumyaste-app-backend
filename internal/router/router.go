@@ -19,6 +19,7 @@ func SetupRouter(
 	authMiddleware *middleware.AuthMiddleware,
 	wsHandler *handler.WebSocketHandler,
 	invitationHandler *handler.InvitationHandler,
+	jobApplicationHandler *handler.JobApplicationHandler,
 ) *gin.Engine {
 	r := gin.Default()
 	r.Use(middleware.CORSMiddleware())
@@ -58,6 +59,7 @@ func SetupRouter(
 		vacancyRoutes.GET("/", vacancyHandler.GetAllVacancies)
 		vacancyRoutes.GET("/my", vacancyHandler.GetMyVacancies)
 		vacancyRoutes.GET("/search", vacancyHandler.SearchVacancies)
+		vacancyRoutes.GET("/:id", vacancyHandler.GetVacancyByID)
 	}
 
 	// --- Чаты ---
@@ -95,6 +97,16 @@ func SetupRouter(
 	invitations.Use(authMiddleware.VerifyTokenMiddleware())
 	{
 		invitations.POST("/", invitationHandler.SendInvitationHandler)
+	}
+
+	// -- Отклики ---
+	jobApp := r.Group("/api/jobs")
+	jobApp.Use(authMiddleware.VerifyTokenMiddleware())
+	{
+		jobApp.POST("/apply/:vacancy_id", jobApplicationHandler.ApplyForJob)
+		jobApp.GET("/:vacancy_id", jobApplicationHandler.GetJobApplicationsByVacancyID)
+		jobApp.PUT("/:application_id/status/:status", jobApplicationHandler.UpdateJobApplicationStatus)
+		jobApp.DELETE("/:application_id", jobApplicationHandler.DeleteJobApplication)
 	}
 
 	// --- WebSocket ---

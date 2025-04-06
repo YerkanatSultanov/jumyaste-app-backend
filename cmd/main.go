@@ -39,6 +39,7 @@ func main() {
 		auth,
 		app.WSHandler,
 		app.InvitationHandler,
+		app.JobAppHandler,
 	)
 
 	serverPort := config.AppConfig.Server.Port

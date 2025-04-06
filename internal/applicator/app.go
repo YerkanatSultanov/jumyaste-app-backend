@@ -17,14 +17,17 @@ type App struct {
 	AuthRepo          *repository.AuthRepository
 	UserRepo          *repository.UserRepository
 	VacancyRepo       *repository.VacancyRepository
+	JobAppRepo        *repository.JobApplicationRepository // Добавлено
 	AuthService       *service.AuthService
 	UserService       *service.UserService
 	VacancyService    *service.VacancyService
 	ResumeService     *service.ResumeService
 	InvitationService *service.InvitationService
+	JobAppService     *service.JobApplicationService
 	AuthHandler       *handler.AuthHandler
 	UserHandler       *handler.UserHandler
 	VacancyHandler    *handler.VacancyHandler
+	JobAppHandler     *handler.JobApplicationHandler
 	ResumeHandler     *handler.ResumeHandler
 	InvitationHandler *handler.InvitationHandler
 	AIClient          *ai.OpenAIClient
@@ -40,7 +43,6 @@ func NewApp(authMiddleware *middleware.AuthMiddleware) *App {
 	database.InitDB()
 	database.RunMigrations()
 
-	// Инициализация Redis
 	logger.Log.Info("Initializing Redis client...")
 	redisClient := redisPkg.InitRedis()
 
@@ -56,6 +58,7 @@ func NewApp(authMiddleware *middleware.AuthMiddleware) *App {
 	chatRepo := repository.NewChatRepository(database.DB)
 	messageRepo := repository.NewMessageRepository(database.DB)
 	resumeRepo := repository.NewResumeRepository(database.DB)
+	jobAppRepo := repository.NewJobApplicationRepository(database.DB)
 
 	logger.Log.Info("Initializing services...")
 	authService := service.NewAuthService(authRepo, redisClient, invitationRepo, hrRepo)
@@ -65,6 +68,7 @@ func NewApp(authMiddleware *middleware.AuthMiddleware) *App {
 	chatService := service.NewChatService(chatRepo)
 	messageService := service.NewMessageService(messageRepo)
 	resumeService := service.NewResumeService(aiClient, resumeRepo)
+	jobAppService := service.NewJobApplicationService(jobAppRepo)
 
 	logger.Log.Info("Initializing WebSocket manager...")
 	wsManager := manager.NewWebSocketManager()
@@ -79,6 +83,7 @@ func NewApp(authMiddleware *middleware.AuthMiddleware) *App {
 	messageHandler := handler.NewMessageHandler(messageService, wsManager)
 	resumeHandler := handler.NewResumeHandler(resumeService)
 	wsHandler := handler.NewWebSocketHandler(wsManager, authMiddleware)
+	jobAppHandler := handler.NewJobApplicationHandler(jobAppService, userService)
 
 	logger.Log.Info("Application initialized successfully")
 
@@ -86,10 +91,12 @@ func NewApp(authMiddleware *middleware.AuthMiddleware) *App {
 		AuthRepo:          authRepo,
 		UserRepo:          userRepo,
 		VacancyRepo:       vacancyRepo,
+		JobAppRepo:        jobAppRepo,
 		AuthService:       authService,
 		UserService:       userService,
 		VacancyService:    vacancyService,
 		ResumeService:     resumeService,
+		JobAppService:     jobAppService,
 		InvitationService: invitationService,
 		AuthHandler:       authHandler,
 		UserHandler:       userHandler,
@@ -98,6 +105,7 @@ func NewApp(authMiddleware *middleware.AuthMiddleware) *App {
 		ChatHandler:       chatHandler,
 		MessageHandler:    messageHandler,
 		ResumeHandler:     resumeHandler,
+		JobAppHandler:     jobAppHandler,
 		AIClient:          aiClient,
 		WSManager:         wsManager,
 		WSHandler:         wsHandler,
