@@ -55,6 +55,7 @@ func NewApp(authMiddleware *middleware.AuthMiddleware) *App {
 	hrRepo := repository.NewHrRepository(database.DB)
 	chatRepo := repository.NewChatRepository(database.DB)
 	messageRepo := repository.NewMessageRepository(database.DB)
+	resumeRepo := repository.NewResumeRepository(database.DB)
 
 	logger.Log.Info("Initializing services...")
 	authService := service.NewAuthService(authRepo, redisClient, invitationRepo, hrRepo)
@@ -63,7 +64,7 @@ func NewApp(authMiddleware *middleware.AuthMiddleware) *App {
 	invitationService := service.NewInvitationService(invitationRepo)
 	chatService := service.NewChatService(chatRepo)
 	messageService := service.NewMessageService(messageRepo)
-	resumeService := service.NewResumeService(aiClient)
+	resumeService := service.NewResumeService(aiClient, resumeRepo)
 
 	logger.Log.Info("Initializing WebSocket manager...")
 	wsManager := manager.NewWebSocketManager()

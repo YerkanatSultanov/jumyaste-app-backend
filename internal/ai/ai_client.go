@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"jumyste-app-backend/pkg/helper"
 	"log"
 	"net/http"
 	"os"
@@ -39,31 +40,29 @@ type OpenAIResponse struct {
 	} `json:"choices"`
 }
 
-func (c *OpenAIClient) AnalyzeResume(text string) (map[string]interface{}, error) {
-	prompt := fmt.Sprintf(`
-You are an AI that analyzes resume text and extracts key fields.
-Fix spacing, correct errors, and return a structured JSON without any explanations.
-
-Return **only JSON**, for example:
-
-{
-  "name": "Yerkanat Sultanov",
-  "contacts": { "phone": "+77471089155", "email": "example@mail.com" },
-  "skills": ["Go", "Python", "PostgreSQL"],
-  "improvements": [
-    "Add more details about recent work experience.",
-    "Include more quantifiable achievements.",
-    "Specify proficiency levels for key skills."
-  ]
+type Resume struct {
+	FullName        string   `json:"full_name"`
+	DesiredPosition string   `json:"desired_position"`
+	Skills          []string `json:"skills"`
+	City            string   `json:"city"`
+	AboutMe         string   `json:"about_me"`
 }
 
-⚠️ Important:
-- Return **only JSON**, **without any explanations**.
-- **Do not include empty fields**.
-- Fix spacing and properly interpret the text.
-- **Provide useful suggestions for improving the resume** in the "improvements" field.
+func (c *OpenAIClient) AnalyzeResume(text string) (*Resume, error) {
+	prompt := fmt.Sprintf(`
+Parse the following resume text and return a JSON object with the following structure:
 
-Here is the resume text:
+{
+  "full_name": "Full name",
+  "desired_position": "Desired job position",
+  "skills": ["Skill1", "Skill2", "Skill3"],
+  "city": "City of residence",
+  "about_me": "Everything else important from the resume (experience, achievements, etc.)"
+}
+
+If some information is missing — leave an empty string or an empty array.
+
+Resume text:
 %s
 `, text)
 
@@ -96,6 +95,7 @@ Here is the resume text:
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
+	log.Printf("Raw AI Response: %s", string(body))
 
 	var openAIResp OpenAIResponse
 	if err := json.Unmarshal(body, &openAIResp); err != nil {
@@ -108,17 +108,20 @@ Here is the resume text:
 	}
 
 	responseText := strings.TrimSpace(openAIResp.Choices[0].Message.Content)
+	log.Printf("AI Response: %s", responseText)
 
-	if !strings.HasPrefix(responseText, "{") {
-		log.Printf("Unexpected AI response format: %s", responseText)
-		return nil, fmt.Errorf("unexpected response format")
+	// Важная часть — достаём JSON из текста
+	jsonStr := helper.ExtractJSON(responseText)
+	if jsonStr == "" {
+		log.Printf("Failed to extract JSON: %s", responseText)
+		return nil, fmt.Errorf("failed to extract JSON from response")
 	}
 
-	var parsedResume map[string]interface{}
-	if err := json.Unmarshal([]byte(responseText), &parsedResume); err != nil {
-		log.Printf("Failed to parse JSON from AI response: %s", responseText)
+	var resume Resume
+	if err := json.Unmarshal([]byte(jsonStr), &resume); err != nil {
+		log.Printf("Failed to parse JSON from AI response: %s", jsonStr)
 		return nil, fmt.Errorf("failed to parse JSON from AI response: %w", err)
 	}
 
-	return parsedResume, nil
+	return &resume, nil
 }

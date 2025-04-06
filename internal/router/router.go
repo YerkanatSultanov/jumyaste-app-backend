@@ -85,6 +85,9 @@ func SetupRouter(
 	resume.Use(authMiddleware.VerifyTokenMiddleware())
 	{
 		resume.POST("/upload", resumeHandler.UploadResume)
+		resume.POST("/manual", resumeHandler.CreateResume)
+		resume.GET("/", resumeHandler.GetResumeByUserID)
+		resume.DELETE("/", resumeHandler.GetResumeByUserID)
 	}
 
 	// --- Приглашения ---

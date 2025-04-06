@@ -53,6 +53,7 @@ func (h *VacancyHandler) CreateVacancy(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create vacancy"})
 		return
 	}
+	logger.Log.Info("Created Vacancy", slog.String("title", vacancy.Title), slog.Time("created_at", vacancy.CreatedAt))
 
 	logger.Log.Info("Vacancy created successfully", slog.String("title", vacancy.Title))
 	c.JSON(http.StatusCreated, vacancy)
@@ -271,4 +272,29 @@ func (h *VacancyHandler) GetVacancyByCompanyID(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, vacancies)
+}
+
+func (h *VacancyHandler) GetVacancyByID(c *gin.Context) {
+	vacancyID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		logger.Log.Error("Invalid vacancy ID", slog.String("error", err.Error()))
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid vacancy ID"})
+		return
+	}
+
+	vacancy, err := h.VacancyService.GetVacancyById(vacancyID)
+	if err != nil {
+		logger.Log.Error("Vacancy not found", slog.Int("vacancy_id", vacancyID), slog.String("error", err.Error()))
+		c.JSON(http.StatusNotFound, gin.H{"error": "Vacancy not found"})
+		return
+	}
+
+	if err := c.ShouldBindJSON(&vacancy); err != nil {
+		logger.Log.Error("Invalid vacancy input", slog.String("error", err.Error()))
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		return
+	}
+
+	logger.Log.Info(" Vacancy received successfully", slog.Int("vacancy_id", vacancyID))
+	c.JSON(http.StatusOK, vacancy)
 }
