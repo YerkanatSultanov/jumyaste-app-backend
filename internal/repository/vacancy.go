@@ -130,7 +130,7 @@ func (r *VacancyRepository) GetAllVacancies() ([]*entity.Vacancy, error) {
 func (r *VacancyRepository) GetVacanciesByRecruiterID(userID int) ([]*entity.Vacancy, error) {
 	query := `
 		SELECT id, title, employment_type, work_format, experience, salary_min, 
-		       salary_max, location, category, skills, description, created_by, company_id
+		       salary_max, location, category, skills, description, created_by, created_at, company_id
 		FROM vacancies 
 		WHERE created_by = $1`
 
@@ -145,7 +145,7 @@ func (r *VacancyRepository) GetVacanciesByRecruiterID(userID int) ([]*entity.Vac
 	for rows.Next() {
 		var v entity.Vacancy
 		if err := rows.Scan(&v.ID, &v.Title, &v.EmploymentType, &v.WorkFormat, &v.Experience,
-			&v.SalaryMin, &v.SalaryMax, &v.Location, &v.Category, pq.Array(&v.Skills), &v.Description, &v.CreatedBy, &v.CompanyId); err != nil {
+			&v.SalaryMin, &v.SalaryMax, &v.Location, &v.Category, pq.Array(&v.Skills), &v.Description, &v.CreatedBy, &v.CreatedAt, &v.CompanyId); err != nil {
 			logger.Log.Error("Error scanning vacancy row", slog.String("error", err.Error()))
 			return nil, err
 		}
