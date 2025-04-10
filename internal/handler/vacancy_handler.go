@@ -261,6 +261,15 @@ func (h *VacancyHandler) SearchVacancies(c *gin.Context) {
 	c.JSON(http.StatusOK, vacancies)
 }
 
+// GetVacancyByCompanyID godoc
+// @Summary      Get vacancies by company ID
+// @Description  Retrieve all vacancies for the company of the current HR
+// @Tags         Vacancies
+// @Security     BearerAuth
+// @Produce      json
+// @Success      200  {array}   entity.Vacancy
+// @Failure      500  {object}  dto.ErrorResponse  "Failed to retrieve vacancies"
+// @Router       /vacancies/company [get]
 func (h *VacancyHandler) GetVacancyByCompanyID(c *gin.Context) {
 	companyId := c.GetInt("company_id")
 	vacancies, err := h.VacancyService.GetVacanciesByCompanyId(companyId)
@@ -274,6 +283,17 @@ func (h *VacancyHandler) GetVacancyByCompanyID(c *gin.Context) {
 	c.JSON(http.StatusOK, vacancies)
 }
 
+// GetVacancyByID godoc
+// @Summary      Get vacancy by ID
+// @Description  Retrieve a specific vacancy by its ID
+// @Security     BearerAuth
+// @Tags         Vacancies
+// @Produce      json
+// @Param        id   path      int  true  "Vacancy ID"
+// @Success      200  {object}  entity.Vacancy
+// @Failure      400  {object}  dto.ErrorResponse  "Invalid vacancy ID"
+// @Failure      404  {object}  dto.ErrorResponse  "Vacancy not found"
+// @Router       /vacancies/{id} [get]
 func (h *VacancyHandler) GetVacancyByID(c *gin.Context) {
 	vacancyID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {

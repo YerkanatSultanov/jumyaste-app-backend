@@ -177,11 +177,12 @@ func (s *AuthService) RegisterUser(userReq *entity.User) error {
 	}
 
 	user := &entity.User{
-		Email:     userReq.Email,
-		Password:  hashedPassword,
-		FirstName: userReq.FirstName,
-		LastName:  userReq.LastName,
-		RoleId:    1,
+		Email:          userReq.Email,
+		Password:       hashedPassword,
+		FirstName:      userReq.FirstName,
+		LastName:       userReq.LastName,
+		ProfilePicture: userReq.ProfilePicture,
+		RoleId:         1,
 	}
 
 	err = s.repo.CreateUser(user)

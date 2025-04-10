@@ -35,7 +35,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.RequestPasswordResetRequest"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.RequestPasswordResetRequest"
                         }
                     }
                 ],
@@ -43,19 +43,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.RequestPasswordResetResponse"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.RequestPasswordResetResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
                         }
                     }
                 }
@@ -63,7 +63,7 @@ const docTemplate = `{
         },
         "/auth/login": {
             "post": {
-                "description": "Authenticates a user and returns a JWT token.",
+                "description": "Authenticates a user and returns access and refresh tokens.",
                 "consumes": [
                     "application/json"
                 ],
@@ -81,7 +81,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.LoginRequest"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.LoginRequest"
                         }
                     }
                 ],
@@ -89,19 +89,65 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.LoginResponse"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.LoginResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/refresh": {
+            "post": {
+                "description": "Generates a new access token using the provided refresh token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Refresh JWT token",
+                "parameters": [
+                    {
+                        "description": "Refresh Token Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.RefreshTokenRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
                         }
                     }
                 }
@@ -109,7 +155,7 @@ const docTemplate = `{
         },
         "/auth/register": {
             "post": {
-                "description": "Creates a new user account with the provided details.",
+                "description": "Creates a new user account.",
                 "consumes": [
                     "application/json"
                 ],
@@ -127,7 +173,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.RegisterUserRequest"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.RegisterUserRequest"
                         }
                     }
                 ],
@@ -135,19 +181,71 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.SuccessResponse"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/register-hr": {
+            "post": {
+                "description": "Creates a new HR account (requires invitation).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Register a new HR",
+                "parameters": [
+                    {
+                        "description": "HR registration data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.RegisterHRRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
                         }
                     }
                 }
@@ -173,7 +271,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.ResetPasswordRequest"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ResetPasswordRequest"
                         }
                     }
                 ],
@@ -181,25 +279,854 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.ResetPasswordResponse"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ResetPasswordResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/chats": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve all chats",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chats"
+                ],
+                "summary": "Get all chats",
+                "responses": {
+                    "200": {
+                        "description": "List of all chats",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/jumyste-app-backend_internal_entity.Chat"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new chat by providing the second user's ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chats"
+                ],
+                "summary": "Create a chat between two users",
+                "parameters": [
+                    {
+                        "description": "Second User ID",
+                        "name": "second_user_id",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Chat created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_entity.Chat"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to create chat",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/chats/user": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve all chats for a specific user by their user ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chats"
+                ],
+                "summary": "Get chats by user ID",
+                "responses": {
+                    "200": {
+                        "description": "List of chats for the user",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/jumyste-app-backend_internal_entity.Chat"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/chats/{chatID}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve a chat by its ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chats"
+                ],
+                "summary": "Get chat by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Chat ID",
+                        "name": "chatID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Chat found",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_entity.Chat"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid chat ID",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Chat not found",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/invitations": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Send an invitation email to a user with company and department information",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Invitations"
+                ],
+                "summary": "Send invitation to register",
+                "parameters": [
+                    {
+                        "description": "Invitation request body",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.SendInvitationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or missing required fields",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to send invitation",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/jobs/apply/{vacancy_id}": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Apply for a job by providing vacancy ID and user details",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Job Applications"
+                ],
+                "summary": "Apply for a job",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Vacancy ID",
+                        "name": "vacancy_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.JobApplicationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid vacancy ID",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to apply for job",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/jobs/{application_id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete a job application by application ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Job Applications"
+                ],
+                "summary": "Delete a job application",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Application ID",
+                        "name": "application_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid application ID",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to delete job application",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/jobs/{application_id}/status/{status}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update the status of a specific job application by application ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Job Applications"
+                ],
+                "summary": "Update the status of a job application",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Application ID",
+                        "name": "application_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "New Status",
+                        "name": "status",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid application ID or status",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to update application status",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/jobs/{vacancy_id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve all job applications for a specific vacancy",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Job Applications"
+                ],
+                "summary": "Get job applications by vacancy ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Vacancy ID",
+                        "name": "vacancy_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/jumyste-app-backend_internal_dto.JobApplicationResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid vacancy ID",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to retrieve job applications",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/messages": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Send a message to a specific chat",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Messages"
+                ],
+                "summary": "Send a message",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Chat ID",
+                        "name": "chat_id",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Message Type (text, image, etc.)",
+                        "name": "type",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Message Content",
+                        "name": "content",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "File URL (optional)",
+                        "name": "file_data",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Message successfully sent",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid input",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/messages/chat/{chatID}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve all messages for a specific chat",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Messages"
+                ],
+                "summary": "Get messages by chat ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Chat ID",
+                        "name": "chatID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of messages",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/jumyste-app-backend_internal_entity.Message"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid chat ID",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/messages/read": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Mark a specific message as read",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Messages"
+                ],
+                "summary": "Mark message as read",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Message ID",
+                        "name": "message_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Status of the operation",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid message ID",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/messages/{messageID}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve a specific message by its ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Messages"
+                ],
+                "summary": "Get message by message ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Message ID",
+                        "name": "messageID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Message details",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_entity.Message"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid message ID",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Message not found",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/resume/": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete the resume associated with a given user ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Resume"
+                ],
+                "summary": "Delete a resume by user ID",
+                "responses": {
+                    "200": {
+                        "description": "Successfully deleted resume",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user ID",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to delete resume",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/resume/manual": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create and save a resume using the provided JSON data",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Resume"
+                ],
+                "summary": "Create a resume from JSON data",
+                "parameters": [
+                    {
+                        "description": "Resume data",
+                        "name": "resume_request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ResumeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Resume saved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid input data",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to save resume",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
                         }
                     }
                 }
@@ -212,7 +1139,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Accepts a PDF file, extracts text, and returns structured resume data",
+                "description": "Upload a resume file and process it",
                 "consumes": [
                     "multipart/form-data"
                 ],
@@ -222,11 +1149,11 @@ const docTemplate = `{
                 "tags": [
                     "Resume"
                 ],
-                "summary": "Upload and parse a resume",
+                "summary": "Upload a resume",
                 "parameters": [
                     {
                         "type": "file",
-                        "description": "Resume file (PDF only)",
+                        "description": "Resume file",
                         "name": "resume",
                         "in": "formData",
                         "required": true
@@ -234,22 +1161,88 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Parsed resume data",
+                        "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ResumeResponse"
                         }
                     },
                     "400": {
                         "description": "Failed to retrieve resume file",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Failed to process resume",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/resume/{user_id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve the resume of a user by their user ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Resume"
+                ],
+                "summary": "Get a resume by user ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ResumeResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user ID",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Resume or user not found",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to get resume",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
                         }
                     }
                 }
@@ -277,25 +1270,25 @@ const docTemplate = `{
                     "200": {
                         "description": "User profile information",
                         "schema": {
-                            "$ref": "#/definitions/entity.User"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_entity.UserResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized - Token is missing or invalid",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "User not found - No user associated with the given ID",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error - Invalid user ID type",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
                         }
                     }
                 }
@@ -333,25 +1326,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.SuccessResponse"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid request body",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Failed to update user",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
                         }
                     }
                 }
@@ -378,14 +1371,14 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/entity.Vacancy"
+                                "$ref": "#/definitions/jumyste-app-backend_internal_entity.Vacancy"
                             }
                         }
                     },
                     "500": {
                         "description": "Failed to fetch vacancies",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
                         }
                     }
                 }
@@ -414,7 +1407,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.CreateVacancyRequest"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.CreateVacancyRequest"
                         }
                     }
                 ],
@@ -422,19 +1415,53 @@ const docTemplate = `{
                     "201": {
                         "description": "Vacancy successfully created",
                         "schema": {
-                            "$ref": "#/definitions/entity.Vacancy"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_entity.Vacancy"
                         }
                     },
                     "400": {
                         "description": "Invalid input",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Failed to create vacancy",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/vacancies/company": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve all vacancies for the company of the current HR",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Vacancies"
+                ],
+                "summary": "Get vacancies by company ID",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/jumyste-app-backend_internal_entity.Vacancy"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to retrieve vacancies",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
                         }
                     }
                 }
@@ -464,14 +1491,14 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/entity.Vacancy"
+                                "$ref": "#/definitions/jumyste-app-backend_internal_entity.Vacancy"
                             }
                         }
                     },
                     "500": {
                         "description": "Failed to retrieve vacancies",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
                         }
                     }
                 }
@@ -539,26 +1566,70 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/entity.Vacancy"
+                                "$ref": "#/definitions/jumyste-app-backend_internal_entity.Vacancy"
                             }
                         }
                     },
                     "400": {
                         "description": "Invalid search parameters",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Failed to search vacancies",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
                         }
                     }
                 }
             }
         },
         "/vacancies/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve a specific vacancy by its ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Vacancies"
+                ],
+                "summary": "Get vacancy by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Vacancy ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_entity.Vacancy"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid vacancy ID",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Vacancy not found",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            },
             "put": {
                 "security": [
                     {
@@ -590,7 +1661,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.UpdateVacancyRequest"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.UpdateVacancyRequest"
                         }
                     }
                 ],
@@ -598,31 +1669,31 @@ const docTemplate = `{
                     "200": {
                         "description": "Vacancy updated successfully",
                         "schema": {
-                            "$ref": "#/definitions/dto.SuccessResponse"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid input or vacancy ID",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "User does not own the vacancy",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Vacancy not found",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Failed to update vacancy",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
                         }
                     }
                 }
@@ -657,31 +1728,31 @@ const docTemplate = `{
                     "200": {
                         "description": "Vacancy deleted successfully",
                         "schema": {
-                            "$ref": "#/definitions/dto.SuccessResponse"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.SuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid vacancy ID",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "User does not own the vacancy",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Vacancy not found",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Failed to delete vacancy",
                         "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
                         }
                     }
                 }
@@ -689,7 +1760,25 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "dto.CreateVacancyRequest": {
+        "gin.H": {
+            "type": "object",
+            "additionalProperties": {}
+        },
+        "internal_handler.SendInvitationRequest": {
+            "type": "object",
+            "properties": {
+                "company_id": {
+                    "type": "integer"
+                },
+                "dep_id": {
+                    "type": "integer"
+                },
+                "email": {
+                    "type": "string"
+                }
+            }
+        },
+        "jumyste-app-backend_internal_dto.CreateVacancyRequest": {
             "type": "object",
             "properties": {
                 "category": {
@@ -740,7 +1829,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.ErrorResponse": {
+        "jumyste-app-backend_internal_dto.ErrorResponse": {
             "type": "object",
             "properties": {
                 "error": {
@@ -749,7 +1838,36 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.LoginRequest": {
+        "jumyste-app-backend_internal_dto.JobApplicationResponse": {
+            "type": "object",
+            "properties": {
+                "applied_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "last_name": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                },
+                "vacancy_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "jumyste-app-backend_internal_dto.LoginRequest": {
             "type": "object",
             "required": [
                 "email",
@@ -766,22 +1884,73 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.LoginResponse": {
+        "jumyste-app-backend_internal_dto.LoginResponse": {
             "type": "object",
             "properties": {
-                "token": {
+                "access_token": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                },
+                "refresh_token": {
                     "type": "string",
                     "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
                 }
             }
         },
-        "dto.RegisterUserRequest": {
+        "jumyste-app-backend_internal_dto.RefreshTokenRequest": {
+            "type": "object",
+            "properties": {
+                "refresh_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "jumyste-app-backend_internal_dto.RegisterHRRequest": {
+            "type": "object",
+            "required": [
+                "company_id",
+                "dep_id",
+                "email",
+                "first_name",
+                "last_name",
+                "password"
+            ],
+            "properties": {
+                "company_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "dep_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                },
+                "first_name": {
+                    "type": "string",
+                    "example": "John"
+                },
+                "last_name": {
+                    "type": "string",
+                    "example": "Doe"
+                },
+                "password": {
+                    "type": "string",
+                    "minLength": 6,
+                    "example": "securepassword"
+                }
+            }
+        },
+        "jumyste-app-backend_internal_dto.RegisterUserRequest": {
             "type": "object",
             "required": [
                 "email",
                 "first_name",
                 "last_name",
-                "password"
+                "password",
+                "profile_picture"
             ],
             "properties": {
                 "email": {
@@ -800,13 +1969,13 @@ const docTemplate = `{
                     "type": "string",
                     "example": "securepassword"
                 },
-                "role_id": {
-                    "type": "integer",
-                    "example": 3
+                "profile_picture": {
+                    "type": "string",
+                    "example": "/static/images/profile.jpg"
                 }
             }
         },
-        "dto.RequestPasswordResetRequest": {
+        "jumyste-app-backend_internal_dto.RequestPasswordResetRequest": {
             "type": "object",
             "required": [
                 "email"
@@ -818,7 +1987,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.RequestPasswordResetResponse": {
+        "jumyste-app-backend_internal_dto.RequestPasswordResetResponse": {
             "type": "object",
             "properties": {
                 "message": {
@@ -827,7 +1996,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.ResetPasswordRequest": {
+        "jumyste-app-backend_internal_dto.ResetPasswordRequest": {
             "type": "object",
             "required": [
                 "confirm_password",
@@ -838,6 +2007,7 @@ const docTemplate = `{
             "properties": {
                 "confirm_password": {
                     "type": "string",
+                    "minLength": 6,
                     "example": "newSecurePass"
                 },
                 "email": {
@@ -846,6 +2016,7 @@ const docTemplate = `{
                 },
                 "new_password": {
                     "type": "string",
+                    "minLength": 6,
                     "example": "newSecurePass"
                 },
                 "reset_code": {
@@ -854,7 +2025,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.ResetPasswordResponse": {
+        "jumyste-app-backend_internal_dto.ResetPasswordResponse": {
             "type": "object",
             "properties": {
                 "message": {
@@ -863,7 +2034,74 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.SuccessResponse": {
+        "jumyste-app-backend_internal_dto.ResumeRequest": {
+            "type": "object",
+            "required": [
+                "desired_position",
+                "full_name",
+                "skills"
+            ],
+            "properties": {
+                "about": {
+                    "type": "string"
+                },
+                "city": {
+                    "type": "string"
+                },
+                "desired_position": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "skills": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "jumyste-app-backend_internal_dto.ResumeResponse": {
+            "type": "object",
+            "properties": {
+                "about": {
+                    "description": "Информация о себе",
+                    "type": "string"
+                },
+                "city": {
+                    "description": "Город",
+                    "type": "string"
+                },
+                "desired_position": {
+                    "description": "Желаемая должность",
+                    "type": "string"
+                },
+                "full_name": {
+                    "description": "Полное имя",
+                    "type": "string"
+                },
+                "parsed_data": {
+                    "description": "Дополнительные данные, извлеченные из резюме"
+                },
+                "skills": {
+                    "description": "Навыки",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "user": {
+                    "description": "Информация о пользователе",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.UserResponse"
+                        }
+                    ]
+                }
+            }
+        },
+        "jumyste-app-backend_internal_dto.SuccessResponse": {
             "type": "object",
             "properties": {
                 "message": {
@@ -872,7 +2110,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.UpdateVacancyRequest": {
+        "jumyste-app-backend_internal_dto.UpdateVacancyRequest": {
             "type": "object",
             "required": [
                 "category",
@@ -922,7 +2160,120 @@ const docTemplate = `{
                 }
             }
         },
-        "entity.User": {
+        "jumyste-app-backend_internal_dto.UserResponse": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "description": "Электронная почта",
+                    "type": "string"
+                },
+                "first_name": {
+                    "description": "Имя пользователя",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "ID пользователя",
+                    "type": "integer"
+                },
+                "last_name": {
+                    "description": "Фамилия пользователя",
+                    "type": "string"
+                },
+                "profile_picture": {
+                    "description": "Профильное изображение",
+                    "type": "string"
+                },
+                "role_id": {
+                    "description": "ID роли пользователя",
+                    "type": "integer"
+                }
+            }
+        },
+        "jumyste-app-backend_internal_entity.Chat": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_read": {
+                    "type": "boolean"
+                },
+                "last_message": {
+                    "type": "string"
+                },
+                "last_message_at": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/jumyste-app-backend_internal_entity.UserResponse"
+                    }
+                }
+            }
+        },
+        "jumyste-app-backend_internal_entity.Message": {
+            "type": "object",
+            "properties": {
+                "chat_id": {
+                    "type": "integer"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "file_url": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_mine": {
+                    "type": "boolean"
+                },
+                "read_by": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "sender_id": {
+                    "type": "integer"
+                },
+                "type": {
+                    "$ref": "#/definitions/jumyste-app-backend_internal_entity.MessageType"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "jumyste-app-backend_internal_entity.MessageType": {
+            "type": "string",
+            "enum": [
+                "text",
+                "image",
+                "video",
+                "audio",
+                "file"
+            ],
+            "x-enum-varnames": [
+                "TextMessage",
+                "ImageMessage",
+                "VideoMessage",
+                "AudioMessage",
+                "FileMessage"
+            ]
+        },
+        "jumyste-app-backend_internal_entity.UserResponse": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -940,22 +2291,19 @@ const docTemplate = `{
                 "last_name": {
                     "type": "string"
                 },
-                "password": {
-                    "type": "string"
-                },
                 "profile_picture": {
                     "type": "string"
-                },
-                "role_id": {
-                    "type": "integer"
                 }
             }
         },
-        "entity.Vacancy": {
+        "jumyste-app-backend_internal_entity.Vacancy": {
             "type": "object",
             "properties": {
                 "category": {
                     "type": "string"
+                },
+                "company_id": {
+                    "type": "integer"
                 },
                 "created_at": {
                     "type": "string"

@@ -88,8 +88,8 @@ func SetupRouter(
 	{
 		resume.POST("/upload", resumeHandler.UploadResume)
 		resume.POST("/manual", resumeHandler.CreateResume)
-		resume.GET("/", resumeHandler.GetResumeByUserID)
-		resume.DELETE("/", resumeHandler.GetResumeByUserID)
+		resume.GET("/:user_id", resumeHandler.GetResumeByUserID)
+		resume.DELETE("/", resumeHandler.DeleteResumeByUserID)
 	}
 
 	// --- Приглашения ---

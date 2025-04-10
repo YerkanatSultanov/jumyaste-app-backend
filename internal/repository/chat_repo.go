@@ -131,7 +131,7 @@ func (r *ChatRepository) GetChatsByUserID(userID int) ([]entity.Chat, error) {
 		    c.updated_at,
 		    COALESCE(m.content, '') AS last_message, 
 		    m.created_at AS last_message_at,
-		    COALESCE(($1 = ANY(m.read_by)), false) AS is_read  -- ✅ Исправлено!
+		    COALESCE(($1 = ANY(m.read_by)), false) AS is_read 
 		FROM chats c
 		JOIN chat_users cu ON c.id = cu.chat_id
 		LEFT JOIN (

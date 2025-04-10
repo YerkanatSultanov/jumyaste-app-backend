@@ -20,24 +20,9 @@ func NewAuthHandler(authService *service.AuthService) *AuthHandler {
 	return &AuthHandler{AuthService: authService}
 }
 
-//func (h *AuthHandler) Register(c *gin.Context) {
-//	var user entity.User
-//	if err := c.ShouldBindJSON(&user); err != nil {
-//		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
-//		return
-//	}
-//
-//	if err := h.AuthService.RegisterUser(user.Email, user.Password, user.FirstName, user.LastName); err != nil {
-//		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to register"})
-//		return
-//	}
-//
-//	c.JSON(http.StatusCreated, gin.H{"message": "User registered successfully"})
-//}
-
 // Login godoc
 // @Summary User login
-// @Description Authenticates a user and returns a JWT token.
+// @Description Authenticates a user and returns access and refresh tokens.
 // @Tags Auth
 // @Accept json
 // @Produce json
@@ -63,9 +48,9 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"access_token":  accessToken,
-		"refresh_token": refreshToken,
+	c.JSON(http.StatusOK, dto.LoginResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
 	})
 }
 
@@ -136,9 +121,9 @@ func (h *AuthHandler) ResetPassword(c *gin.Context) {
 	c.JSON(http.StatusOK, dto.ResetPasswordResponse{Message: "Password reset successful"})
 }
 
-// Register godoc
+// RegisterUser godoc
 // @Summary Register a new user
-// @Description Creates a new user account with the provided details.
+// @Description Creates a new user account.
 // @Tags Auth
 // @Accept json
 // @Produce json
@@ -147,45 +132,6 @@ func (h *AuthHandler) ResetPassword(c *gin.Context) {
 // @Failure 400 {object} dto.ErrorResponse
 // @Failure 500 {object} dto.ErrorResponse
 // @Router /auth/register [post]
-//func (h *AuthHandler) Register(c *gin.Context) {
-//	var request dto.RegisterUserRequest
-//
-//	if err := c.ShouldBindJSON(&request); err != nil {
-//		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
-//		return
-//	}
-//
-//	if request.RoleID == 0 {
-//		request.RoleID = 3
-//	}
-//
-//	user := &entity.User{
-//		Email:     request.Email,
-//		Password:  request.Password,
-//		FirstName: request.FirstName,
-//		LastName:  request.LastName,
-//		//RoleID:    request.RoleID,
-//	}
-//
-//	if err := h.AuthService.RegisterUser(user); err != nil {
-//		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-//		return
-//	}
-//
-//	c.JSON(http.StatusOK, gin.H{"message": "User registered successfully"})
-//}
-
-// RegisterUser godoc
-// @Summary Register a new user
-// @Description Creates a new user account
-// @Tags Auth
-// @Accept json
-// @Produce json
-// @Param request body dto.RegisterUserRequest true "User registration data"
-// @Success 200 {object} dto.SuccessResponse
-// @Failure 400 {object} dto.ErrorResponse
-// @Failure 500 {object} dto.ErrorResponse
-// @Router /auth/register/user [post]
 func (h *AuthHandler) RegisterUser(c *gin.Context) {
 	var request dto.RegisterUserRequest
 
@@ -195,11 +141,12 @@ func (h *AuthHandler) RegisterUser(c *gin.Context) {
 	}
 
 	user := &entity.User{
-		Email:     request.Email,
-		Password:  request.Password,
-		FirstName: request.FirstName,
-		LastName:  request.LastName,
-		RoleId:    1,
+		Email:          request.Email,
+		Password:       request.Password,
+		FirstName:      request.FirstName,
+		LastName:       request.LastName,
+		ProfilePicture: request.ProfilePicture,
+		RoleId:         1,
 	}
 
 	if err := h.AuthService.RegisterUser(user); err != nil {
@@ -213,15 +160,16 @@ func (h *AuthHandler) RegisterUser(c *gin.Context) {
 
 // RegisterHR godoc
 // @Summary Register a new HR
-// @Description Creates a new HR account (requires invitation)
+// @Description Creates a new HR account (requires invitation).
 // @Tags Auth
 // @Accept json
 // @Produce json
 // @Param request body dto.RegisterHRRequest true "HR registration data"
 // @Success 200 {object} dto.SuccessResponse
 // @Failure 400 {object} dto.ErrorResponse
+// @Failure 404 {object} dto.ErrorResponse
 // @Failure 500 {object} dto.ErrorResponse
-// @Router /auth/register/hr [post]
+// @Router /auth/register-hr [post]
 func (h *AuthHandler) RegisterHR(c *gin.Context) {
 	var request dto.RegisterHRRequest
 
@@ -247,6 +195,17 @@ func (h *AuthHandler) RegisterHR(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "HR registered successfully"})
 }
 
+// RefreshToken godoc
+// @Summary Refresh JWT token
+// @Description Generates a new access token using the provided refresh token
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body dto.RefreshTokenRequest true "Refresh Token Request"
+// @Success 200 {object} dto.SuccessResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 401 {object} dto.ErrorResponse
+// @Router /auth/refresh [post]
 func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	var req struct {
 		RefreshToken string `json:"refresh_token"`
@@ -271,22 +230,3 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"access_token": accessToken})
 }
-
-//func (h *AuthHandler) VerifyCodeAndRegister(c *gin.Context) {
-//	var request struct {
-//		Email string `json:"email"`
-//		Code  string `json:"code"`
-//	}
-//
-//	if err := c.ShouldBindJSON(&request); err != nil {
-//		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
-//		return
-//	}
-//
-//	if err := h.AuthService.VerifyCodeAndRegister(request.Email, request.Code); err != nil {
-//		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-//		return
-//	}
-//
-//	c.JSON(http.StatusCreated, gin.H{"message": "User registered successfully"})
-//}

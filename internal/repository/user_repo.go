@@ -25,11 +25,11 @@ func (r *UserRepository) CreateUser(user *entity.User) error {
 }
 
 func (r *UserRepository) GetUserByID(id int) (*entity.UserResponse, error) {
-	query := `SELECT id, email, first_name, last_name, profile_picture FROM users WHERE id = $1`
+	query := `SELECT id, email, first_name, last_name, profile_picture, created_at FROM users WHERE id = $1`
 	row := r.DB.QueryRow(query, id)
 
 	var user entity.UserResponse
-	err := row.Scan(&user.ID, &user.Email, &user.FirstName, &user.LastName, &user.ProfilePicture)
+	err := row.Scan(&user.ID, &user.Email, &user.FirstName, &user.LastName, &user.ProfilePicture, &user.CreatedAt)
 	return &user, err
 }
 func (r *UserRepository) UpdateUser(userID int, updates map[string]interface{}) error {

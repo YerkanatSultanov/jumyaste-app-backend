@@ -1,6 +1,18 @@
 basePath: /api
 definitions:
-  dto.CreateVacancyRequest:
+  gin.H:
+    additionalProperties: {}
+    type: object
+  internal_handler.SendInvitationRequest:
+    properties:
+      company_id:
+        type: integer
+      dep_id:
+        type: integer
+      email:
+        type: string
+    type: object
+  jumyste-app-backend_internal_dto.CreateVacancyRequest:
     properties:
       category:
         example: IT
@@ -37,13 +49,32 @@ definitions:
         example: Гибрид
         type: string
     type: object
-  dto.ErrorResponse:
+  jumyste-app-backend_internal_dto.ErrorResponse:
     properties:
       error:
         example: Invalid input
         type: string
     type: object
-  dto.LoginRequest:
+  jumyste-app-backend_internal_dto.JobApplicationResponse:
+    properties:
+      applied_at:
+        type: string
+      email:
+        type: string
+      first_name:
+        type: string
+      id:
+        type: integer
+      last_name:
+        type: string
+      status:
+        type: string
+      user_id:
+        type: integer
+      vacancy_id:
+        type: integer
+    type: object
+  jumyste-app-backend_internal_dto.LoginRequest:
     properties:
       email:
         example: user@example.com
@@ -55,13 +86,50 @@ definitions:
     - email
     - password
     type: object
-  dto.LoginResponse:
+  jumyste-app-backend_internal_dto.LoginResponse:
     properties:
-      token:
+      access_token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+      refresh_token:
         example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
         type: string
     type: object
-  dto.RegisterUserRequest:
+  jumyste-app-backend_internal_dto.RefreshTokenRequest:
+    properties:
+      refresh_token:
+        type: string
+    type: object
+  jumyste-app-backend_internal_dto.RegisterHRRequest:
+    properties:
+      company_id:
+        example: 1
+        type: integer
+      dep_id:
+        example: 1
+        type: integer
+      email:
+        example: user@example.com
+        type: string
+      first_name:
+        example: John
+        type: string
+      last_name:
+        example: Doe
+        type: string
+      password:
+        example: securepassword
+        minLength: 6
+        type: string
+    required:
+    - company_id
+    - dep_id
+    - email
+    - first_name
+    - last_name
+    - password
+    type: object
+  jumyste-app-backend_internal_dto.RegisterUserRequest:
     properties:
       email:
         example: user@example.com
@@ -75,16 +143,17 @@ definitions:
       password:
         example: securepassword
         type: string
-      role_id:
-        example: 3
-        type: integer
+      profile_picture:
+        example: /static/images/profile.jpg
+        type: string
     required:
     - email
     - first_name
     - last_name
     - password
+    - profile_picture
     type: object
-  dto.RequestPasswordResetRequest:
+  jumyste-app-backend_internal_dto.RequestPasswordResetRequest:
     properties:
       email:
         example: user@example.com
@@ -92,22 +161,24 @@ definitions:
     required:
     - email
     type: object
-  dto.RequestPasswordResetResponse:
+  jumyste-app-backend_internal_dto.RequestPasswordResetResponse:
     properties:
       message:
         example: Reset code sent to your email
         type: string
     type: object
-  dto.ResetPasswordRequest:
+  jumyste-app-backend_internal_dto.ResetPasswordRequest:
     properties:
       confirm_password:
         example: newSecurePass
+        minLength: 6
         type: string
       email:
         example: user@example.com
         type: string
       new_password:
         example: newSecurePass
+        minLength: 6
         type: string
       reset_code:
         example: "123456"
@@ -118,19 +189,64 @@ definitions:
     - new_password
     - reset_code
     type: object
-  dto.ResetPasswordResponse:
+  jumyste-app-backend_internal_dto.ResetPasswordResponse:
     properties:
       message:
         example: Password reset successful
         type: string
     type: object
-  dto.SuccessResponse:
+  jumyste-app-backend_internal_dto.ResumeRequest:
+    properties:
+      about:
+        type: string
+      city:
+        type: string
+      desired_position:
+        type: string
+      full_name:
+        type: string
+      skills:
+        items:
+          type: string
+        type: array
+    required:
+    - desired_position
+    - full_name
+    - skills
+    type: object
+  jumyste-app-backend_internal_dto.ResumeResponse:
+    properties:
+      about:
+        description: Информация о себе
+        type: string
+      city:
+        description: Город
+        type: string
+      desired_position:
+        description: Желаемая должность
+        type: string
+      full_name:
+        description: Полное имя
+        type: string
+      parsed_data:
+        description: Дополнительные данные, извлеченные из резюме
+      skills:
+        description: Навыки
+        items:
+          type: string
+        type: array
+      user:
+        allOf:
+        - $ref: '#/definitions/jumyste-app-backend_internal_dto.UserResponse'
+        description: Информация о пользователе
+    type: object
+  jumyste-app-backend_internal_dto.SuccessResponse:
     properties:
       message:
         example: User registered successfully
         type: string
     type: object
-  dto.UpdateVacancyRequest:
+  jumyste-app-backend_internal_dto.UpdateVacancyRequest:
     properties:
       category:
         type: string
@@ -166,7 +282,86 @@ definitions:
     - title
     - work_format
     type: object
-  entity.User:
+  jumyste-app-backend_internal_dto.UserResponse:
+    properties:
+      email:
+        description: Электронная почта
+        type: string
+      first_name:
+        description: Имя пользователя
+        type: string
+      id:
+        description: ID пользователя
+        type: integer
+      last_name:
+        description: Фамилия пользователя
+        type: string
+      profile_picture:
+        description: Профильное изображение
+        type: string
+      role_id:
+        description: ID роли пользователя
+        type: integer
+    type: object
+  jumyste-app-backend_internal_entity.Chat:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      is_read:
+        type: boolean
+      last_message:
+        type: string
+      last_message_at:
+        type: string
+      updated_at:
+        type: string
+      users:
+        items:
+          $ref: '#/definitions/jumyste-app-backend_internal_entity.UserResponse'
+        type: array
+    type: object
+  jumyste-app-backend_internal_entity.Message:
+    properties:
+      chat_id:
+        type: integer
+      content:
+        type: string
+      created_at:
+        type: string
+      file_url:
+        type: string
+      id:
+        type: integer
+      is_mine:
+        type: boolean
+      read_by:
+        items:
+          type: integer
+        type: array
+      sender_id:
+        type: integer
+      type:
+        $ref: '#/definitions/jumyste-app-backend_internal_entity.MessageType'
+      updated_at:
+        type: string
+    type: object
+  jumyste-app-backend_internal_entity.MessageType:
+    enum:
+    - text
+    - image
+    - video
+    - audio
+    - file
+    type: string
+    x-enum-varnames:
+    - TextMessage
+    - ImageMessage
+    - VideoMessage
+    - AudioMessage
+    - FileMessage
+  jumyste-app-backend_internal_entity.UserResponse:
     properties:
       created_at:
         type: string
@@ -178,17 +373,15 @@ definitions:
         type: integer
       last_name:
         type: string
-      password:
-        type: string
       profile_picture:
         type: string
-      role_id:
-        type: integer
     type: object
-  entity.Vacancy:
+  jumyste-app-backend_internal_entity.Vacancy:
     properties:
       category:
         type: string
+      company_id:
+        type: integer
       created_at:
         type: string
       created_by:
@@ -234,22 +427,22 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/dto.RequestPasswordResetRequest'
+          $ref: '#/definitions/jumyste-app-backend_internal_dto.RequestPasswordResetRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.RequestPasswordResetResponse'
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.RequestPasswordResetResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
       summary: Request password reset
       tags:
       - Auth
@@ -257,60 +450,124 @@ paths:
     post:
       consumes:
       - application/json
-      description: Authenticates a user and returns a JWT token.
+      description: Authenticates a user and returns access and refresh tokens.
       parameters:
       - description: Login credentials
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/dto.LoginRequest'
+          $ref: '#/definitions/jumyste-app-backend_internal_dto.LoginRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.LoginResponse'
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.LoginResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
       summary: User login
+      tags:
+      - Auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Generates a new access token using the provided refresh token
+      parameters:
+      - description: Refresh Token Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/jumyste-app-backend_internal_dto.RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+      summary: Refresh JWT token
       tags:
       - Auth
   /auth/register:
     post:
       consumes:
       - application/json
-      description: Creates a new user account with the provided details.
+      description: Creates a new user account.
       parameters:
       - description: User registration data
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/dto.RegisterUserRequest'
+          $ref: '#/definitions/jumyste-app-backend_internal_dto.RegisterUserRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.SuccessResponse'
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.SuccessResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
       summary: Register a new user
+      tags:
+      - Auth
+  /auth/register-hr:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new HR account (requires invitation).
+      parameters:
+      - description: HR registration data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/jumyste-app-backend_internal_dto.RegisterHRRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+      summary: Register a new HR
       tags:
       - Auth
   /auth/reset-password:
@@ -324,37 +581,605 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/dto.ResetPasswordRequest'
+          $ref: '#/definitions/jumyste-app-backend_internal_dto.ResetPasswordRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.ResetPasswordResponse'
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ResetPasswordResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
       summary: Reset user password
       tags:
       - Auth
+  /chats:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all chats
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of all chats
+          schema:
+            items:
+              $ref: '#/definitions/jumyste-app-backend_internal_entity.Chat'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all chats
+      tags:
+      - Chats
+    post:
+      consumes:
+      - application/json
+      description: Create a new chat by providing the second user's ID
+      parameters:
+      - description: Second User ID
+        in: body
+        name: second_user_id
+        required: true
+        schema:
+          type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Chat created successfully
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_entity.Chat'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "500":
+          description: Failed to create chat
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a chat between two users
+      tags:
+      - Chats
+  /chats/{chatID}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a chat by its ID
+      parameters:
+      - description: Chat ID
+        in: path
+        name: chatID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Chat found
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_entity.Chat'
+        "400":
+          description: Invalid chat ID
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "404":
+          description: Chat not found
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get chat by ID
+      tags:
+      - Chats
+  /chats/user:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all chats for a specific user by their user ID
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of chats for the user
+          schema:
+            items:
+              $ref: '#/definitions/jumyste-app-backend_internal_entity.Chat'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get chats by user ID
+      tags:
+      - Chats
+  /invitations:
+    post:
+      consumes:
+      - application/json
+      description: Send an invitation email to a user with company and department
+        information
+      parameters:
+      - description: Invitation request body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.SendInvitationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.SuccessResponse'
+        "400":
+          description: Invalid request body or missing required fields
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "500":
+          description: Failed to send invitation
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Send invitation to register
+      tags:
+      - Invitations
+  /jobs/{application_id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a job application by application ID
+      parameters:
+      - description: Application ID
+        in: path
+        name: application_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.SuccessResponse'
+        "400":
+          description: Invalid application ID
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "500":
+          description: Failed to delete job application
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a job application
+      tags:
+      - Job Applications
+  /jobs/{application_id}/status/{status}:
+    put:
+      consumes:
+      - application/json
+      description: Update the status of a specific job application by application
+        ID
+      parameters:
+      - description: Application ID
+        in: path
+        name: application_id
+        required: true
+        type: integer
+      - description: New Status
+        in: path
+        name: status
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.SuccessResponse'
+        "400":
+          description: Invalid application ID or status
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "500":
+          description: Failed to update application status
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update the status of a job application
+      tags:
+      - Job Applications
+  /jobs/{vacancy_id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all job applications for a specific vacancy
+      parameters:
+      - description: Vacancy ID
+        in: path
+        name: vacancy_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/jumyste-app-backend_internal_dto.JobApplicationResponse'
+            type: array
+        "400":
+          description: Invalid vacancy ID
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "500":
+          description: Failed to retrieve job applications
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get job applications by vacancy ID
+      tags:
+      - Job Applications
+  /jobs/apply/{vacancy_id}:
+    post:
+      consumes:
+      - application/json
+      description: Apply for a job by providing vacancy ID and user details
+      parameters:
+      - description: Vacancy ID
+        in: path
+        name: vacancy_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.JobApplicationResponse'
+        "400":
+          description: Invalid vacancy ID
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "500":
+          description: Failed to apply for job
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Apply for a job
+      tags:
+      - Job Applications
+  /messages:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Send a message to a specific chat
+      parameters:
+      - description: Chat ID
+        in: formData
+        name: chat_id
+        required: true
+        type: integer
+      - description: Message Type (text, image, etc.)
+        in: formData
+        name: type
+        required: true
+        type: string
+      - description: Message Content
+        in: formData
+        name: content
+        required: true
+        type: string
+      - description: File URL (optional)
+        in: formData
+        name: file_data
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Message successfully sent
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Send a message
+      tags:
+      - Messages
+  /messages/{messageID}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a specific message by its ID
+      parameters:
+      - description: Message ID
+        in: path
+        name: messageID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Message details
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_entity.Message'
+        "400":
+          description: Invalid message ID
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "404":
+          description: Message not found
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get message by message ID
+      tags:
+      - Messages
+  /messages/chat/{chatID}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all messages for a specific chat
+      parameters:
+      - description: Chat ID
+        in: path
+        name: chatID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of messages
+          schema:
+            items:
+              $ref: '#/definitions/jumyste-app-backend_internal_entity.Message'
+            type: array
+        "400":
+          description: Invalid chat ID
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get messages by chat ID
+      tags:
+      - Messages
+  /messages/read:
+    post:
+      consumes:
+      - application/json
+      description: Mark a specific message as read
+      parameters:
+      - description: Message ID
+        in: query
+        name: message_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Status of the operation
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Invalid message ID
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Mark message as read
+      tags:
+      - Messages
+  /resume/:
+    delete:
+      consumes:
+      - application/json
+      description: Delete the resume associated with a given user ID
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully deleted resume
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.SuccessResponse'
+        "400":
+          description: Invalid user ID
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "500":
+          description: Failed to delete resume
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a resume by user ID
+      tags:
+      - Resume
+  /resume/{user_id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve the resume of a user by their user ID
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ResumeResponse'
+        "400":
+          description: Invalid user ID
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "404":
+          description: Resume or user not found
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "500":
+          description: Failed to get resume
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get a resume by user ID
+      tags:
+      - Resume
+  /resume/manual:
+    post:
+      consumes:
+      - application/json
+      description: Create and save a resume using the provided JSON data
+      parameters:
+      - description: Resume data
+        in: body
+        name: resume_request
+        required: true
+        schema:
+          $ref: '#/definitions/jumyste-app-backend_internal_dto.ResumeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Resume saved successfully
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.SuccessResponse'
+        "400":
+          description: Invalid input data
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "500":
+          description: Failed to save resume
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a resume from JSON data
+      tags:
+      - Resume
   /resume/upload:
     post:
       consumes:
       - multipart/form-data
-      description: Accepts a PDF file, extracts text, and returns structured resume
-        data
+      description: Upload a resume file and process it
       parameters:
-      - description: Resume file (PDF only)
+      - description: Resume file
         in: formData
         name: resume
         required: true
@@ -363,21 +1188,24 @@ paths:
       - application/json
       responses:
         "200":
-          description: Parsed resume data
+          description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ResumeResponse'
         "400":
           description: Failed to retrieve resume file
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
         "500":
           description: Failed to process resume
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Upload and parse a resume
+      summary: Upload a resume
       tags:
       - Resume
   /users/me:
@@ -391,19 +1219,19 @@ paths:
         "200":
           description: User profile information
           schema:
-            $ref: '#/definitions/entity.User'
+            $ref: '#/definitions/jumyste-app-backend_internal_entity.UserResponse'
         "401":
           description: Unauthorized - Token is missing or invalid
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
         "404":
           description: User not found - No user associated with the given ID
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
         "500":
           description: Internal server error - Invalid user ID type
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get user information
@@ -427,19 +1255,19 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.SuccessResponse'
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.SuccessResponse'
         "400":
           description: Invalid request body
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
         "500":
           description: Failed to update user
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Update user information
@@ -455,12 +1283,12 @@ paths:
           description: List of vacancies
           schema:
             items:
-              $ref: '#/definitions/entity.Vacancy'
+              $ref: '#/definitions/jumyste-app-backend_internal_entity.Vacancy'
             type: array
         "500":
           description: Failed to fetch vacancies
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get all vacancies
@@ -476,22 +1304,22 @@ paths:
         name: vacancy
         required: true
         schema:
-          $ref: '#/definitions/dto.CreateVacancyRequest'
+          $ref: '#/definitions/jumyste-app-backend_internal_dto.CreateVacancyRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Vacancy successfully created
           schema:
-            $ref: '#/definitions/entity.Vacancy'
+            $ref: '#/definitions/jumyste-app-backend_internal_entity.Vacancy'
         "400":
           description: Invalid input
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
         "500":
           description: Failed to create vacancy
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Create a new vacancy
@@ -514,26 +1342,54 @@ paths:
         "200":
           description: Vacancy deleted successfully
           schema:
-            $ref: '#/definitions/dto.SuccessResponse'
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.SuccessResponse'
         "400":
           description: Invalid vacancy ID
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
         "403":
           description: User does not own the vacancy
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
         "404":
           description: Vacancy not found
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
         "500":
           description: Failed to delete vacancy
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Delete a vacancy
+      tags:
+      - Vacancies
+    get:
+      description: Retrieve a specific vacancy by its ID
+      parameters:
+      - description: Vacancy ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_entity.Vacancy'
+        "400":
+          description: Invalid vacancy ID
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "404":
+          description: Vacancy not found
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get vacancy by ID
       tags:
       - Vacancies
     put:
@@ -551,33 +1407,54 @@ paths:
         name: vacancy
         required: true
         schema:
-          $ref: '#/definitions/dto.UpdateVacancyRequest'
+          $ref: '#/definitions/jumyste-app-backend_internal_dto.UpdateVacancyRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Vacancy updated successfully
           schema:
-            $ref: '#/definitions/dto.SuccessResponse'
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.SuccessResponse'
         "400":
           description: Invalid input or vacancy ID
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
         "403":
           description: User does not own the vacancy
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
         "404":
           description: Vacancy not found
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
         "500":
           description: Failed to update vacancy
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Update an existing vacancy
+      tags:
+      - Vacancies
+  /vacancies/company:
+    get:
+      description: Retrieve all vacancies for the company of the current HR
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/jumyste-app-backend_internal_entity.Vacancy'
+            type: array
+        "500":
+          description: Failed to retrieve vacancies
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get vacancies by company ID
       tags:
       - Vacancies
   /vacancies/my:
@@ -593,12 +1470,12 @@ paths:
           description: List of vacancies
           schema:
             items:
-              $ref: '#/definitions/entity.Vacancy'
+              $ref: '#/definitions/jumyste-app-backend_internal_entity.Vacancy'
             type: array
         "500":
           description: Failed to retrieve vacancies
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get vacancies created by the authenticated HR
@@ -642,16 +1519,16 @@ paths:
           description: List of matching vacancies
           schema:
             items:
-              $ref: '#/definitions/entity.Vacancy'
+              $ref: '#/definitions/jumyste-app-backend_internal_entity.Vacancy'
             type: array
         "400":
           description: Invalid search parameters
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
         "500":
           description: Failed to search vacancies
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Search for vacancies

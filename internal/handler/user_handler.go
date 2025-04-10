@@ -40,7 +40,7 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 // @Security     BearerAuth
 // @Accept       json
 // @Produce      json
-// @Success      200  {object}  entity.User  "User profile information"
+// @Success      200  {object}  entity.UserResponse  "User profile information"
 // @Failure      401  {object}  dto.ErrorResponse  "Unauthorized - Token is missing or invalid"
 // @Failure      404  {object}  dto.ErrorResponse  "User not found - No user associated with the given ID"
 // @Failure      500  {object}  dto.ErrorResponse  "Internal server error - Invalid user ID type"
@@ -68,18 +68,18 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 }
 
 // UpdateUser godoc
-// @Summary Update user information
-// @Description Update user details such as name, email, or profile picture
-// @Tags Users
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param updates body map[string]interface{} true "Fields to update"
-// @Success 200 {object} dto.SuccessResponse
-// @Failure 400 {object} dto.ErrorResponse "Invalid request body"
-// @Failure 401 {object} dto.ErrorResponse "Unauthorized"
-// @Failure 500 {object} dto.ErrorResponse "Failed to update user"
-// @Router /users/me [patch]
+// @Summary      Update user information
+// @Description  Update user details such as name, email, or profile picture
+// @Tags         Users
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        updates  body      map[string]interface{}  true  "Fields to update"
+// @Success      200      {object}  dto.SuccessResponse
+// @Failure      400      {object}  dto.ErrorResponse  "Invalid request body"
+// @Failure      401      {object}  dto.ErrorResponse  "Unauthorized"
+// @Failure      500      {object}  dto.ErrorResponse  "Failed to update user"
+// @Router       /users/me [patch]
 func (h *UserHandler) UpdateUser(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {

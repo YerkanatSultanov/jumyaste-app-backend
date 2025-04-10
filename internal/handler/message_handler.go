@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"github.com/gin-gonic/gin"
+	_ "jumyste-app-backend/internal/dto"
 	"jumyste-app-backend/internal/entity"
 	"jumyste-app-backend/internal/manager"
 	"jumyste-app-backend/internal/service"
@@ -24,6 +25,22 @@ func NewMessageHandler(messageService *service.MessageService, wsManager *manage
 	}
 }
 
+// SendMessageHandler godoc
+// @Summary Send a message
+// @Description Send a message to a specific chat
+// @Tags Messages
+// @Accept multipart/form-data
+// @Produce json
+// @Security BearerAuth
+// @Param chat_id formData int true "Chat ID"
+// @Param type formData string true "Message Type (text, image, etc.)"
+// @Param content formData string true "Message Content"
+// @Param file_data formData string false "File URL (optional)"
+// @Success 201 {object} gin.H "Message successfully sent"
+// @Failure 400 {object} dto.ErrorResponse "Invalid input"
+// @Failure 401 {object} dto.ErrorResponse "Unauthorized"
+// @Failure 500 {object} dto.ErrorResponse "Internal server error"
+// @Router /messages [post]
 func (h *MessageHandler) SendMessageHandler(c *gin.Context) {
 	chatID, err := strconv.Atoi(c.PostForm("chat_id"))
 	if err != nil {
@@ -75,7 +92,19 @@ func (h *MessageHandler) SendMessageHandler(c *gin.Context) {
 	c.JSON(http.StatusCreated, messageData)
 }
 
-// GetMessagesByChatIDHandler - Retrieves all messages in a chat
+// GetMessagesByChatIDHandler godoc
+// @Summary Get messages by chat ID
+// @Description Retrieve all messages for a specific chat
+// @Tags Messages
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param chatID path int true "Chat ID"
+// @Success 200 {array} entity.Message "List of messages"
+// @Failure 400 {object} dto.ErrorResponse "Invalid chat ID"
+// @Failure 401 {object} dto.ErrorResponse "Unauthorized"
+// @Failure 500 {object} dto.ErrorResponse "Internal server error"
+// @Router /messages/chat/{chatID} [get]
 func (h *MessageHandler) GetMessagesByChatIDHandler(c *gin.Context) {
 	chatID, err := strconv.Atoi(c.Param("chatID"))
 	if err != nil {
@@ -98,7 +127,19 @@ func (h *MessageHandler) GetMessagesByChatIDHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, messages)
 }
 
-// GetMessageByIDHandler - Retrieves a specific message by ID
+// GetMessageByIDHandler godoc
+// @Summary Get message by message ID
+// @Description Retrieve a specific message by its ID
+// @Tags Messages
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param messageID path int true "Message ID"
+// @Success 200 {object} entity.Message "Message details"
+// @Failure 400 {object} dto.ErrorResponse "Invalid message ID"
+// @Failure 404 {object} dto.ErrorResponse "Message not found"
+// @Failure 500 {object} dto.ErrorResponse "Internal server error"
+// @Router /messages/{messageID} [get]
 func (h *MessageHandler) GetMessageByIDHandler(c *gin.Context) {
 	messageID, err := strconv.ParseUint(c.Param("messageID"), 10, 64)
 	if err != nil {
@@ -115,6 +156,19 @@ func (h *MessageHandler) GetMessageByIDHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, message)
 }
 
+// MarkAsRead godoc
+// @Summary Mark message as read
+// @Description Mark a specific message as read
+// @Tags Messages
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param message_id query int true "Message ID"
+// @Success 200 {object} gin.H "Status of the operation"
+// @Failure 400 {object} dto.ErrorResponse "Invalid message ID"
+// @Failure 401 {object} dto.ErrorResponse "Unauthorized"
+// @Failure 500 {object} dto.ErrorResponse "Internal server error"
+// @Router /messages/read [post]
 func (h *MessageHandler) MarkAsRead(c *gin.Context) {
 	userID := c.GetInt("user_id")
 	messageID, err := strconv.Atoi(c.Query("message_id"))
@@ -124,14 +178,12 @@ func (h *MessageHandler) MarkAsRead(c *gin.Context) {
 		return
 	}
 
-	// Отмечаем сообщение как прочитанное в БД
 	err = h.MessageService.MarkMessageAsRead(c.Request.Context(), messageID, userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to mark message as read"})
 		return
 	}
 
-	// Получаем информацию о сообщении (например, ChatID)
 	message, err := h.MessageService.GetMessageByID(messageID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve message info"})

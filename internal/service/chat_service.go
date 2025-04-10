@@ -16,13 +16,11 @@ func NewChatService(chatRepo *repository.ChatRepository) *ChatService {
 	return &ChatService{ChatRepo: chatRepo}
 }
 
-// CreateChat - Creates a new chat
 func (s *ChatService) CreateChat(userId, secondUserId int) (*entity.Chat, error) {
 	if userId == 0 || secondUserId == 0 {
 		return nil, errors.New("both users must be provided")
 	}
 
-	// Проверяем, существуют ли пользователи
 	users, err := s.ChatRepo.GetUsersByIDs([]int{userId, secondUserId})
 	if err != nil {
 		return nil, err
@@ -35,7 +33,6 @@ func (s *ChatService) CreateChat(userId, secondUserId int) (*entity.Chat, error)
 		Users: users,
 	}
 
-	// Создаём чат
 	chatID, err := s.ChatRepo.CreateChat(chat)
 	if err != nil {
 		return nil, err
@@ -63,7 +60,6 @@ func (s *ChatService) GetAllChats() ([]entity.Chat, error) {
 	return chats, nil
 }
 
-// GetChatsByUserID - Получает чаты, в которых участвует пользователь
 func (s *ChatService) GetChatsByUserID(userID int) ([]entity.Chat, error) {
 	logger.Log.Info("Fetching chats for user", slog.Int("user_id", userID))
 
