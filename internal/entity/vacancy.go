@@ -2,6 +2,8 @@ package entity
 
 import "time"
 
+type VacancyStatus string
+
 type Vacancy struct {
 	ID             int       `json:"id"`
 	Title          string    `json:"title"`
@@ -17,15 +19,18 @@ type Vacancy struct {
 	CreatedBy      int       `json:"created_by"`
 	CreatedAt      time.Time `json:"created_at"`
 	CompanyId      int       `json:"company_id"`
+	Status         string    `json:"status"`
+	CountResponses int       `json:"count_responses"`
 }
 
 type VacancyFilter struct {
-	Title          string
-	Skills         []string
-	Experience     string
-	EmploymentType []string
-	WorkFormat     []string
-	Location       string
-	CompanyId      int
-	Query          string
+	Title          string   `form:"title"`
+	Skills         []string `form:"skills"`
+	Experience     string   `form:"experience"`
+	EmploymentType []string `form:"employment_type"`
+	WorkFormat     []string `form:"work_format"`
+	Location       string   `form:"location"`
+	CompanyId      int      `form:"company_id"`
+	Query          string   `form:"query"`
+	Status         string   `form:"status"`
 }

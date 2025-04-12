@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS vacancy_feed_views;

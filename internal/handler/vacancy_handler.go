@@ -45,6 +45,7 @@ func (h *VacancyHandler) CreateVacancy(c *gin.Context) {
 
 	vacancy.CreatedBy = userID
 	vacancy.CompanyId = companyID
+	vacancy.Status = "open"
 
 	logger.Log.Info("Creating vacancy", slog.Int("created_by", vacancy.CreatedBy), slog.String("title", vacancy.Title))
 
@@ -84,7 +85,7 @@ func (h *VacancyHandler) UpdateVacancy(c *gin.Context) {
 	}
 
 	userID := c.GetInt("user_id")
-	vacancy, err := h.VacancyService.GetVacancyById(vacancyID)
+	vacancy, err := h.VacancyService.GetVacancyById(vacancyID, true)
 	if err != nil {
 		logger.Log.Error("Vacancy not found", slog.Int("vacancy_id", vacancyID), slog.String("error", err.Error()))
 		c.JSON(http.StatusNotFound, gin.H{"error": "Vacancy not found"})
@@ -207,7 +208,10 @@ func (h *VacancyHandler) GetMyVacancies(c *gin.Context) {
 // SearchVacancies godoc
 //
 // @Summary Search for vacancies
-// @Description Allows searching for vacancies based on various filters
+// @Description Allows searching for vacancies based on various filters, including an optional status filter.
+//
+//	If 'status' is set to 'all', it will return vacancies regardless of their status (open or closed).
+//
 // @Tags Vacancies
 // @Accept json
 // @Produce json
@@ -216,6 +220,7 @@ func (h *VacancyHandler) GetMyVacancies(c *gin.Context) {
 // @Param employment_type query []string false "Employment type filter" collectionFormat(multi)
 // @Param work_format query []string false "Work format filter" collectionFormat(multi)
 // @Param skills query []string false "Skills filter" collectionFormat(multi)
+// @Param status query string false "Filter vacancies by status (open, closed, or 'all' for all vacancies)" Enum(open,closed,all) default(all)
 // @Success 200 {array} entity.Vacancy "List of matching vacancies"
 // @Failure 400 {object} dto.ErrorResponse "Invalid search parameters"
 // @Failure 500 {object} dto.ErrorResponse "Failed to search vacancies"
@@ -241,6 +246,10 @@ func (h *VacancyHandler) SearchVacancies(c *gin.Context) {
 
 	if skills := c.QueryArray("skills"); len(skills) > 0 {
 		filter.Skills = skills
+	}
+
+	if status := c.DefaultQuery("status", "all"); status != "all" {
+		filter.Status = status
 	}
 
 	logger.Log.Info("Handling search vacancies request", "filter", filter)
@@ -283,7 +292,7 @@ func (h *VacancyHandler) GetVacancyByCompanyID(c *gin.Context) {
 	c.JSON(http.StatusOK, vacancies)
 }
 
-// GetVacancyByID godoc
+// GetVacancyByIDForUser godoc
 // @Summary      Get vacancy by ID
 // @Description  Retrieve a specific vacancy by its ID
 // @Security     BearerAuth
@@ -293,8 +302,8 @@ func (h *VacancyHandler) GetVacancyByCompanyID(c *gin.Context) {
 // @Success      200  {object}  entity.Vacancy
 // @Failure      400  {object}  dto.ErrorResponse  "Invalid vacancy ID"
 // @Failure      404  {object}  dto.ErrorResponse  "Vacancy not found"
-// @Router       /vacancies/{id} [get]
-func (h *VacancyHandler) GetVacancyByID(c *gin.Context) {
+// @Router       /vacancies/user/{id} [get]
+func (h *VacancyHandler) GetVacancyByIDForUser(c *gin.Context) {
 	vacancyID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		logger.Log.Error("Invalid vacancy ID", slog.String("error", err.Error()))
@@ -302,7 +311,7 @@ func (h *VacancyHandler) GetVacancyByID(c *gin.Context) {
 		return
 	}
 
-	vacancy, err := h.VacancyService.GetVacancyById(vacancyID)
+	vacancy, err := h.VacancyService.GetVacancyById(vacancyID, false)
 	if err != nil {
 		logger.Log.Error("Vacancy not found", slog.Int("vacancy_id", vacancyID), slog.String("error", err.Error()))
 		c.JSON(http.StatusNotFound, gin.H{"error": "Vacancy not found"})
@@ -311,4 +320,103 @@ func (h *VacancyHandler) GetVacancyByID(c *gin.Context) {
 
 	logger.Log.Info("Vacancy retrieved successfully", slog.Int("vacancy_id", vacancy.ID))
 	c.JSON(http.StatusOK, vacancy)
+}
+
+// GetVacancyByIDForHr godoc
+// @Summary      Get vacancy by ID
+// @Description  Retrieve a specific vacancy by its ID
+// @Security     BearerAuth
+// @Tags         Vacancies
+// @Produce      json
+// @Param        id   path      int  true  "Vacancy ID"
+// @Success      200  {object}  entity.Vacancy
+// @Failure      400  {object}  dto.ErrorResponse  "Invalid vacancy ID"
+// @Failure      404  {object}  dto.ErrorResponse  "Vacancy not found"
+// @Router       /vacancies/hr/{id} [get]
+func (h *VacancyHandler) GetVacancyByIDForHr(c *gin.Context) {
+	vacancyID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		logger.Log.Error("Invalid vacancy ID", slog.String("error", err.Error()))
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid vacancy ID"})
+		return
+	}
+
+	vacancy, err := h.VacancyService.GetVacancyById(vacancyID, true)
+	if err != nil {
+		logger.Log.Error("Vacancy not found", slog.Int("vacancy_id", vacancyID), slog.String("error", err.Error()))
+		c.JSON(http.StatusNotFound, gin.H{"error": "Vacancy not found"})
+		return
+	}
+
+	logger.Log.Info("Vacancy retrieved successfully", slog.Int("vacancy_id", vacancy.ID))
+	c.JSON(http.StatusOK, vacancy)
+}
+
+// UpdateVacancyStatusHandler godoc
+// @Summary      Update vacancy status
+// @Description  Update the status of a vacancy by its ID
+// @Security     BearerAuth
+// @Tags         Vacancies
+// @Accept       json
+// @Produce      json
+// @Param        id     path     int  true  "Vacancy ID"
+// @Param        request body dto.UpdateVacancyStatusRequest true  "New status"
+// @Success      200 {object} dto.SuccessResponse
+// @Failure      400 {object} dto.ErrorResponse
+// @Failure      500 {object} dto.ErrorResponse
+// @Router       /vacancies/status/{id} [put]
+func (h *VacancyHandler) UpdateVacancyStatusHandler(c *gin.Context) {
+	vacancyID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		logger.Log.Error("Invalid vacancy ID", slog.String("error", err.Error()))
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: "Invalid vacancy ID"})
+		return
+	}
+	var request dto.UpdateVacancyStatusRequest
+
+	if err := c.ShouldBindJSON(&request); err != nil {
+		logger.Log.Error("Invalid request body", slog.String("error", err.Error()))
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: "Invalid request body"})
+		return
+	}
+
+	logger.Log.Info("Attempting to update vacancy status", slog.Int("vacancy_id", vacancyID), slog.String("new_status", request.Status))
+
+	err = h.VacancyService.UpdateVacancyStatus(vacancyID, request.Status)
+	if err != nil {
+		logger.Log.Error("Failed to update vacancy status", slog.Int("vacancy_id", vacancyID), slog.String("error", err.Error()))
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: "Failed to update vacancy status"})
+		return
+	}
+
+	logger.Log.Info("Successfully updated vacancy status", slog.Int("vacancy_id", vacancyID))
+
+	c.JSON(http.StatusOK, dto.SuccessResponse{Message: "Successfully updated vacancy status"})
+}
+
+// GetFeedData godoc
+//
+// @Summary Get feed data for user
+// @Description Returns count of new vacancies since last feed view
+// @Tags Vacancies
+// @Security BearerAuth
+// @Success 200 {object} dto.FeedDataResponse "Feed data"
+// @Failure 401 {object} dto.ErrorResponse "Unauthorized"
+// @Failure 500 {object} dto.ErrorResponse "Internal error"
+// @Router /vacancies/feed/data [get]
+func (h *VacancyHandler) GetFeedData(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, dto.ErrorResponse{Error: "Unauthorized"})
+		return
+	}
+
+	data, err := h.VacancyService.GetFeedData(userID.(int))
+	if err != nil {
+		logger.Log.Error("Failed to get feed data", "error", err)
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: "Failed to get feed data"})
+		return
+	}
+
+	c.JSON(http.StatusOK, data)
 }

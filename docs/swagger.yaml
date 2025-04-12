@@ -55,6 +55,11 @@ definitions:
         example: Invalid input
         type: string
     type: object
+  jumyste-app-backend_internal_dto.FeedDataResponse:
+    properties:
+      new_vacancies_count:
+        type: integer
+    type: object
   jumyste-app-backend_internal_dto.JobApplicationResponse:
     properties:
       applied_at:
@@ -282,6 +287,11 @@ definitions:
     - title
     - work_format
     type: object
+  jumyste-app-backend_internal_dto.UpdateVacancyStatusRequest:
+    properties:
+      status:
+        type: string
+    type: object
   jumyste-app-backend_internal_dto.UserResponse:
     properties:
       email:
@@ -382,6 +392,8 @@ definitions:
         type: string
       company_id:
         type: integer
+      count_responses:
+        type: integer
       created_at:
         type: string
       created_by:
@@ -404,6 +416,8 @@ definitions:
         items:
           type: string
         type: array
+      status:
+        type: string
       title:
         type: string
       work_format:
@@ -1364,34 +1378,6 @@ paths:
       summary: Delete a vacancy
       tags:
       - Vacancies
-    get:
-      description: Retrieve a specific vacancy by its ID
-      parameters:
-      - description: Vacancy ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/jumyste-app-backend_internal_entity.Vacancy'
-        "400":
-          description: Invalid vacancy ID
-          schema:
-            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
-        "404":
-          description: Vacancy not found
-          schema:
-            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Get vacancy by ID
-      tags:
-      - Vacancies
     put:
       consumes:
       - application/json
@@ -1457,6 +1443,56 @@ paths:
       summary: Get vacancies by company ID
       tags:
       - Vacancies
+  /vacancies/feed/data:
+    get:
+      description: Returns count of new vacancies since last feed view
+      responses:
+        "200":
+          description: Feed data
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.FeedDataResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "500":
+          description: Internal error
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get feed data for user
+      tags:
+      - Vacancies
+  /vacancies/hr/{id}:
+    get:
+      description: Retrieve a specific vacancy by its ID
+      parameters:
+      - description: Vacancy ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_entity.Vacancy'
+        "400":
+          description: Invalid vacancy ID
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "404":
+          description: Vacancy not found
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get vacancy by ID
+      tags:
+      - Vacancies
   /vacancies/my:
     get:
       consumes:
@@ -1485,7 +1521,8 @@ paths:
     get:
       consumes:
       - application/json
-      description: Allows searching for vacancies based on various filters
+      description: Allows searching for vacancies based on various filters, including
+        an optional status filter.
       parameters:
       - description: Search query
         in: query
@@ -1512,6 +1549,11 @@ paths:
           type: string
         name: skills
         type: array
+      - default: all
+        description: Filter vacancies by status (open, closed, or 'all' for all vacancies)
+        in: query
+        name: status
+        type: string
       produces:
       - application/json
       responses:
@@ -1532,6 +1574,72 @@ paths:
       security:
       - BearerAuth: []
       summary: Search for vacancies
+      tags:
+      - Vacancies
+  /vacancies/status/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Update the status of a vacancy by its ID
+      parameters:
+      - description: Vacancy ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: New status
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/jumyste-app-backend_internal_dto.UpdateVacancyStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update vacancy status
+      tags:
+      - Vacancies
+  /vacancies/user/{id}:
+    get:
+      description: Retrieve a specific vacancy by its ID
+      parameters:
+      - description: Vacancy ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_entity.Vacancy'
+        "400":
+          description: Invalid vacancy ID
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "404":
+          description: Vacancy not found
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get vacancy by ID
       tags:
       - Vacancies
 securityDefinitions:

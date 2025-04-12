@@ -1467,6 +1467,86 @@ const docTemplate = `{
                 }
             }
         },
+        "/vacancies/feed/data": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns count of new vacancies since last feed view",
+                "tags": [
+                    "Vacancies"
+                ],
+                "summary": "Get feed data for user",
+                "responses": {
+                    "200": {
+                        "description": "Feed data",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.FeedDataResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal error",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/vacancies/hr/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve a specific vacancy by its ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Vacancies"
+                ],
+                "summary": "Get vacancy by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Vacancy ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_entity.Vacancy"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid vacancy ID",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Vacancy not found",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/vacancies/my": {
             "get": {
                 "security": [
@@ -1511,7 +1591,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Allows searching for vacancies based on various filters",
+                "description": "Allows searching for vacancies based on various filters, including an optional status filter.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1558,6 +1638,13 @@ const docTemplate = `{
                         "description": "Skills filter",
                         "name": "skills",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "all",
+                        "description": "Filter vacancies by status (open, closed, or 'all' for all vacancies)",
+                        "name": "status",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -1585,7 +1672,65 @@ const docTemplate = `{
                 }
             }
         },
-        "/vacancies/{id}": {
+        "/vacancies/status/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update the status of a vacancy by its ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Vacancies"
+                ],
+                "summary": "Update vacancy status",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Vacancy ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "New status",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.UpdateVacancyStatusRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/vacancies/user/{id}": {
             "get": {
                 "security": [
                     {
@@ -1629,7 +1774,9 @@ const docTemplate = `{
                         }
                     }
                 }
-            },
+            }
+        },
+        "/vacancies/{id}": {
             "put": {
                 "security": [
                     {
@@ -1835,6 +1982,14 @@ const docTemplate = `{
                 "error": {
                     "type": "string",
                     "example": "Invalid input"
+                }
+            }
+        },
+        "jumyste-app-backend_internal_dto.FeedDataResponse": {
+            "type": "object",
+            "properties": {
+                "new_vacancies_count": {
+                    "type": "integer"
                 }
             }
         },
@@ -2160,6 +2315,14 @@ const docTemplate = `{
                 }
             }
         },
+        "jumyste-app-backend_internal_dto.UpdateVacancyStatusRequest": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
         "jumyste-app-backend_internal_dto.UserResponse": {
             "type": "object",
             "properties": {
@@ -2305,6 +2468,9 @@ const docTemplate = `{
                 "company_id": {
                     "type": "integer"
                 },
+                "count_responses": {
+                    "type": "integer"
+                },
                 "created_at": {
                     "type": "string"
                 },
@@ -2337,6 +2503,9 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                },
+                "status": {
+                    "type": "string"
                 },
                 "title": {
                     "type": "string"

@@ -59,7 +59,10 @@ func SetupRouter(
 		vacancyRoutes.GET("/", vacancyHandler.GetAllVacancies)
 		vacancyRoutes.GET("/my", vacancyHandler.GetMyVacancies)
 		vacancyRoutes.GET("/search", vacancyHandler.SearchVacancies)
-		vacancyRoutes.GET("/:id", vacancyHandler.GetVacancyByID)
+		vacancyRoutes.GET("/user/:id", vacancyHandler.GetVacancyByIDForUser)
+		vacancyRoutes.GET("/hr/:id", vacancyHandler.GetVacancyByIDForHr)
+		vacancyRoutes.GET("/feed/data", vacancyHandler.GetFeedData)
+		vacancyRoutes.PUT("/status/:id", vacancyHandler.UpdateVacancyStatusHandler)
 	}
 
 	// --- Чаты ---

@@ -25,3 +25,11 @@ type UpdateVacancyRequest struct {
 	Skills         []string `json:"skills" binding:"required"`
 	Description    string   `json:"description" binding:"required"`
 }
+
+type UpdateVacancyStatusRequest struct {
+	Status string `json:"status"`
+}
+
+type FeedDataResponse struct {
+	NewVacanciesCount int `json:"new_vacancies_count"`
+}
