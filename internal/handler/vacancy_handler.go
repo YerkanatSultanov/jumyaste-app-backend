@@ -420,3 +420,33 @@ func (h *VacancyHandler) GetFeedData(c *gin.Context) {
 
 	c.JSON(http.StatusOK, data)
 }
+
+// GenerateVacancyDescription godoc
+// @Summary Generate vacancy description
+// @Description Generate a detailed HTML description for the given vacancy details.
+// @Tags Vacancies
+// @Security BearerAuth
+// @Accept  json
+// @Produce  json
+// @Param vacancyInput body dto.VacancyInput true "Vacancy Input"
+// @Success 200 {object} dto.DescriptionResponse "Description generated successfully"
+// @Failure 400 {object} dto.ErrorResponse "Invalid input"
+// @Failure 500 {object} dto.ErrorResponse "Failed to generate description"
+// @Router /vacancies/generate-description [post]
+func (h *VacancyHandler) GenerateVacancyDescription(c *gin.Context) {
+	var input dto.VacancyInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		logger.Log.Error("Invalid vacancy input", "error", err)
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: "Invalid input"})
+		return
+	}
+
+	description, err := h.VacancyService.GenerateDescription(input)
+	if err != nil {
+		logger.Log.Error("Failed to generate vacancy description", "error", err)
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: "Failed to generate description"})
+		return
+	}
+
+	c.JSON(http.StatusOK, dto.DescriptionResponse{Description: description})
+}

@@ -761,7 +761,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/jumyste-app-backend_internal_dto.JobApplicationResponse"
+                                "$ref": "#/definitions/jumyste-app-backend_internal_dto.JobApplicationWithResumeResponse"
                             }
                         }
                     },
@@ -1501,6 +1501,57 @@ const docTemplate = `{
                 }
             }
         },
+        "/vacancies/generate-description": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Generate a detailed HTML description for the given vacancy details.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Vacancies"
+                ],
+                "summary": "Generate vacancy description",
+                "parameters": [
+                    {
+                        "description": "Vacancy Input",
+                        "name": "vacancyInput",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.VacancyInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Description generated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.DescriptionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid input",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to generate description",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/vacancies/hr/{id}": {
             "get": {
                 "security": [
@@ -1976,6 +2027,14 @@ const docTemplate = `{
                 }
             }
         },
+        "jumyste-app-backend_internal_dto.DescriptionResponse": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                }
+            }
+        },
         "jumyste-app-backend_internal_dto.ErrorResponse": {
             "type": "object",
             "properties": {
@@ -2010,6 +2069,38 @@ const docTemplate = `{
                 },
                 "last_name": {
                     "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                },
+                "vacancy_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "jumyste-app-backend_internal_dto.JobApplicationWithResumeResponse": {
+            "type": "object",
+            "properties": {
+                "applied_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "last_name": {
+                    "type": "string"
+                },
+                "resume": {
+                    "$ref": "#/definitions/jumyste-app-backend_internal_dto.ResumeResponse"
                 },
                 "status": {
                     "type": "string"
@@ -2221,38 +2312,26 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "about": {
-                    "description": "Информация о себе",
                     "type": "string"
                 },
                 "city": {
-                    "description": "Город",
                     "type": "string"
                 },
                 "desired_position": {
-                    "description": "Желаемая должность",
                     "type": "string"
                 },
                 "full_name": {
-                    "description": "Полное имя",
                     "type": "string"
                 },
-                "parsed_data": {
-                    "description": "Дополнительные данные, извлеченные из резюме"
-                },
+                "parsed_data": {},
                 "skills": {
-                    "description": "Навыки",
                     "type": "array",
                     "items": {
                         "type": "string"
                     }
                 },
                 "user": {
-                    "description": "Информация о пользователе",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.UserResponse"
-                        }
-                    ]
+                    "$ref": "#/definitions/jumyste-app-backend_internal_dto.UserResponse"
                 }
             }
         },
@@ -2327,28 +2406,54 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "email": {
-                    "description": "Электронная почта",
                     "type": "string"
                 },
                 "first_name": {
-                    "description": "Имя пользователя",
                     "type": "string"
                 },
                 "id": {
-                    "description": "ID пользователя",
                     "type": "integer"
                 },
                 "last_name": {
-                    "description": "Фамилия пользователя",
                     "type": "string"
                 },
                 "profile_picture": {
-                    "description": "Профильное изображение",
                     "type": "string"
                 },
                 "role_id": {
-                    "description": "ID роли пользователя",
                     "type": "integer"
+                }
+            }
+        },
+        "jumyste-app-backend_internal_dto.VacancyInput": {
+            "type": "object",
+            "properties": {
+                "employment_type": {
+                    "type": "string"
+                },
+                "experience": {
+                    "type": "string"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "salary_max": {
+                    "type": "integer"
+                },
+                "salary_min": {
+                    "type": "integer"
+                },
+                "skills": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "title": {
+                    "type": "string"
+                },
+                "work_format": {
+                    "type": "string"
                 }
             }
         },

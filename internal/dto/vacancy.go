@@ -33,3 +33,18 @@ type UpdateVacancyStatusRequest struct {
 type FeedDataResponse struct {
 	NewVacanciesCount int `json:"new_vacancies_count"`
 }
+
+type VacancyInput struct {
+	Title          string   `json:"title"`
+	EmploymentType string   `json:"employment_type"`
+	WorkFormat     string   `json:"work_format"`
+	Skills         []string `json:"skills"`
+	Location       string   `json:"location"`
+	Experience     string   `json:"experience"`
+	SalaryMin      int      `json:"salary_min"`
+	SalaryMax      int      `json:"salary_max"`
+}
+
+type DescriptionResponse struct {
+	Description string `json:"description"`
+}

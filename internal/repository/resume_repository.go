@@ -48,7 +48,7 @@ func (r *ResumeRepository) CreateResume(ctx context.Context, resume *entity.Resu
 func (r *ResumeRepository) GetResumeByUserID(ctx context.Context, userID int) (*entity.Resume, *entity.User, error) {
 	var resume entity.Resume
 	var user entity.User
-	var parsedData []byte // Добавляем переменную для хранения данных в виде []byte
+	var parsedData []byte
 
 	query := `
 		SELECT 
@@ -106,4 +106,43 @@ func (r *ResumeRepository) DeleteResumeByUserID(ctx context.Context, userID int)
 		return err
 	}
 	return nil
+}
+
+func (r *ResumeRepository) GetByID(ctx context.Context, resumeID int) (*entity.Resume, error) {
+	var resume entity.Resume
+	var parsedData []byte
+
+	query := `
+		SELECT id, user_id, full_name, desired_position, skills, city, about, parsed_data, created_at
+		FROM resume
+		WHERE id = $1
+	`
+
+	err := r.DB.QueryRowContext(ctx, query, resumeID).Scan(
+		&resume.ID,
+		&resume.UserID,
+		&resume.FullName,
+		&resume.DesiredPosition,
+		pq.Array(&resume.Skills),
+		&resume.City,
+		&resume.About,
+		&parsedData,
+		&resume.CreatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		logger.Log.Error("Failed to get resume by ID", "error", err)
+		return nil, err
+	}
+
+	if len(parsedData) > 0 {
+		if err := json.Unmarshal(parsedData, &resume.ParsedData); err != nil {
+			logger.Log.Error("Failed to unmarshal parsed_data in GetByID", "error", err)
+			return nil, err
+		}
+	}
+
+	return &resume, nil
 }

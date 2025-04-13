@@ -63,6 +63,7 @@ func SetupRouter(
 		vacancyRoutes.GET("/hr/:id", vacancyHandler.GetVacancyByIDForHr)
 		vacancyRoutes.GET("/feed/data", vacancyHandler.GetFeedData)
 		vacancyRoutes.PUT("/status/:id", vacancyHandler.UpdateVacancyStatusHandler)
+		vacancyRoutes.POST("/generate-description", vacancyHandler.GenerateVacancyDescription)
 	}
 
 	// --- Чаты ---

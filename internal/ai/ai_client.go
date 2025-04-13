@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"jumyste-app-backend/internal/dto"
 	"jumyste-app-backend/pkg/helper"
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -110,7 +112,6 @@ Resume text:
 	responseText := strings.TrimSpace(openAIResp.Choices[0].Message.Content)
 	log.Printf("AI Response: %s", responseText)
 
-	// Важная часть — достаём JSON из текста
 	jsonStr := helper.ExtractJSON(responseText)
 	if jsonStr == "" {
 		log.Printf("Failed to extract JSON: %s", responseText)
@@ -124,4 +125,144 @@ Resume text:
 	}
 
 	return &resume, nil
+}
+
+func (c *OpenAIClient) GenerateVacancyDescription(input dto.VacancyInput) (string, error) {
+	prompt := fmt.Sprintf(`
+Ты HR-специалист. На основе следующих данных о вакансии сгенерируй качественное, подробное и привлекательное описание вакансии на русском языке в формате HTML.
+
+Данные:
+Название: %s  
+Тип занятости: %s  
+Формат работы: %s  
+Навыки: %s  
+Локация: %s  
+Опыт: %s  
+Зарплата: от %d до %d  
+
+Описание должно быть:
+- структурированным и легко читаемым,
+- оформленным в HTML с использованием тегов <b>, <i>, <ul>, <li>, <p>, <h2> и других при необходимости,
+- с выделением ключевых разделов: «Обязанности», «Требования», «Мы предлагаем».
+
+Результат должен быть валидным HTML-блоком:
+- Каждую информацию представь в соответствующем блоке: заголовок в <h2>, текстовые блоки в <p>,
+- Используй <ul> и <li> для списка обязанностей, требований и предложений,
+- Обязательно разделяй разделы с помощью <h2> для заголовков,
+- Не используйте переносы строк с \n или <br>, оформляй структуру с помощью HTML.
+
+Важно:
+- не выдумывай информацию — опирайся строго на предоставленные данные;
+- избегай излишней общности — пиши конкретно и по делу;
+- сделай описание привлекательным для кандидатов.
+
+Результат должен быть валидным HTML-блоком, без объяснений и комментариев.
+`, input.Title, input.EmploymentType, input.WorkFormat, strings.Join(input.Skills, ", "), input.Location, input.Experience, input.SalaryMin, input.SalaryMax)
+
+	requestBody, err := json.Marshal(OpenAIRequest{
+		Model: "gpt-4o-mini",
+		Messages: []Message{
+			{Role: "system", Content: "Ты помощник HR, создающий описания вакансий."},
+			{Role: "user", Content: prompt},
+		},
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to encode request: %w", err)
+	}
+
+	req, err := http.NewRequest("POST", "https://api.openai.com/v1/chat/completions", bytes.NewBuffer(requestBody))
+	if err != nil {
+		return "", fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Authorization", "Bearer "+c.APIKey)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	var openAIResp OpenAIResponse
+	if err := json.Unmarshal(body, &openAIResp); err != nil {
+		return "", fmt.Errorf("failed to parse OpenAI response: %w", err)
+	}
+
+	if len(openAIResp.Choices) == 0 {
+		return "", fmt.Errorf("no response from AI")
+	}
+
+	description := strings.TrimSpace(openAIResp.Choices[0].Message.Content)
+	return description, nil
+}
+
+func (c *OpenAIClient) GetMatchingScore(resumeText string, vacancyDescription string) (int, error) {
+	prompt := fmt.Sprintf(`
+Оцени, насколько данное резюме соответствует описанию вакансии, по шкале от 0 до 100.
+Ответь только одним числом — процент соответствия. Никаких пояснений, текста или JSON.
+
+Резюме:
+%s
+
+Вакансия:
+%s
+`, resumeText, vacancyDescription)
+
+	requestBody, err := json.Marshal(OpenAIRequest{
+		Model: "gpt-4o-mini",
+		Messages: []Message{
+			{Role: "system", Content: "Ты AI-рекрутер. Твоя задача — оценить соответствие кандидата вакансии по шкале от 0 до 100. Отвечай только числом."},
+			{Role: "user", Content: prompt},
+		},
+	})
+	if err != nil {
+		return 0, fmt.Errorf("failed to encode matching request: %w", err)
+	}
+
+	req, err := http.NewRequest("POST", "https://api.openai.com/v1/chat/completions", bytes.NewBuffer(requestBody))
+	if err != nil {
+		return 0, fmt.Errorf("failed to create matching request: %w", err)
+	}
+
+	req.Header.Set("Authorization", "Bearer "+c.APIKey)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return 0, fmt.Errorf("failed to send matching request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return 0, fmt.Errorf("failed to read matching response: %w", err)
+	}
+
+	log.Printf("Raw matching response: %s", string(body))
+
+	var openAIResp OpenAIResponse
+	if err := json.Unmarshal(body, &openAIResp); err != nil {
+		return 0, fmt.Errorf("failed to parse matching response: %w", err)
+	}
+
+	if len(openAIResp.Choices) == 0 {
+		return 0, fmt.Errorf("empty matching response")
+	}
+
+	text := strings.TrimSpace(openAIResp.Choices[0].Message.Content)
+	text = strings.TrimSuffix(text, "%")
+
+	score, err := strconv.Atoi(text)
+	if err != nil {
+		log.Printf("Failed to parse score from text: %s", text)
+		return 0, fmt.Errorf("invalid score format: %w", err)
+	}
+
+	return score, nil
 }

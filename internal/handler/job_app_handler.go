@@ -11,11 +11,11 @@ import (
 
 type JobApplicationHandler struct {
 	JobApplicationService *service.JobApplicationService
-	UserService           *service.UserService
+	ResumeService         *service.ResumeService
 }
 
-func NewJobApplicationHandler(service *service.JobApplicationService, userService *service.UserService) *JobApplicationHandler {
-	return &JobApplicationHandler{JobApplicationService: service, UserService: userService}
+func NewJobApplicationHandler(service *service.JobApplicationService, resumeService *service.ResumeService) *JobApplicationHandler {
+	return &JobApplicationHandler{JobApplicationService: service, ResumeService: resumeService}
 }
 
 // ApplyForJob godoc
@@ -41,15 +41,14 @@ func (h *JobApplicationHandler) ApplyForJob(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid vacancy ID"})
 		return
 	}
-
-	user, err := h.UserService.GetUserByID(userID)
+	resume, user, err := h.ResumeService.GetResumeAndUserByUserID(c.Request.Context(), userID)
 	if err != nil {
-		logger.Log.Error("Failed to retrieve user information", "error", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve user information"})
+		logger.Log.Error("Failed to retrieve user information and resume", "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve user information and resume"})
 		return
 	}
 
-	application, err := h.JobApplicationService.ApplyForJob(c.Request.Context(), userID, vacancyID, user.FirstName, user.LastName, user.Email)
+	application, err := h.JobApplicationService.ApplyForJob(c.Request.Context(), userID, vacancyID, user.FirstName, user.LastName, user.Email, resume.ID)
 	if err != nil {
 		logger.Log.Error("Failed to apply for job", "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -67,7 +66,7 @@ func (h *JobApplicationHandler) ApplyForJob(c *gin.Context) {
 // @Produce json
 // @Param vacancy_id path int true "Vacancy ID"
 // @Security BearerAuth
-// @Success 200 {array} dto.JobApplicationResponse
+// @Success 200 {array} dto.JobApplicationWithResumeResponse
 // @Failure 400 {object} dto.ErrorResponse "Invalid vacancy ID"
 // @Failure 401 {object} dto.ErrorResponse "Unauthorized"
 // @Failure 500 {object} dto.ErrorResponse "Failed to retrieve job applications"

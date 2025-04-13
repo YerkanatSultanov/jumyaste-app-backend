@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"fmt"
+	"jumyste-app-backend/internal/ai"
 	"jumyste-app-backend/internal/dto"
 	"jumyste-app-backend/internal/entity"
 	"jumyste-app-backend/internal/repository"
@@ -11,11 +12,15 @@ import (
 )
 
 type VacancyService struct {
-	repo *repository.VacancyRepository
+	repo     *repository.VacancyRepository
+	AiClient *ai.OpenAIClient
 }
 
-func NewVacancyService(repo *repository.VacancyRepository) *VacancyService {
-	return &VacancyService{repo: repo}
+func NewVacancyService(repo *repository.VacancyRepository, aiClient *ai.OpenAIClient) *VacancyService {
+	return &VacancyService{
+		repo:     repo,
+		AiClient: aiClient,
+	}
 }
 
 func (s *VacancyService) CreateVacancy(v *entity.Vacancy) error {
@@ -182,4 +187,17 @@ func (s *VacancyService) GetFeedData(userID int) (dto.FeedDataResponse, error) {
 	return dto.FeedDataResponse{
 		NewVacanciesCount: newVacanciesCount,
 	}, nil
+}
+
+func (s *VacancyService) GenerateDescription(input dto.VacancyInput) (string, error) {
+	logger.Log.Info("Generating vacancy description with AI", slog.String("title", input.Title))
+
+	description, err := s.AiClient.GenerateVacancyDescription(input)
+	if err != nil {
+		logger.Log.Error("Failed to generate vacancy description", slog.String("error", err.Error()))
+		return "", err
+	}
+
+	logger.Log.Info("Vacancy description generated successfully")
+	return description, nil
 }

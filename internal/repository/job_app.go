@@ -17,8 +17,8 @@ func NewJobApplicationRepository(db *sql.DB) *JobApplicationRepository {
 
 func (r *JobApplicationRepository) CreateJobApplication(ctx context.Context, application *entity.JobApplication) error {
 	query := `
-        INSERT INTO job_applications (user_id, vacancy_id, first_name, last_name, email, status)
-        VALUES ($1, $2, $3, $4, $5, $6)
+        INSERT INTO job_applications (user_id, vacancy_id, first_name, last_name, email, status, resume_id, ai_matching_score)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING id, applied_at
     `
 	err := r.DB.QueryRowContext(ctx, query,
@@ -28,13 +28,15 @@ func (r *JobApplicationRepository) CreateJobApplication(ctx context.Context, app
 		application.LastName,
 		application.Email,
 		application.Status,
+		application.ResumeID,
+		application.AIMatchingScore,
 	).Scan(&application.ID, &application.AppliedAt)
 	return err
 }
 
 func (r *JobApplicationRepository) GetJobApplicationsByVacancyID(ctx context.Context, vacancyID int) ([]entity.JobApplication, error) {
 	query := `
-        SELECT id, user_id, vacancy_id, first_name, last_name, email, status, applied_at
+        SELECT id, user_id, vacancy_id, first_name, last_name, email, status, applied_at, resume_id, ai_matching_score
         FROM job_applications
         WHERE vacancy_id = $1
     `
@@ -48,7 +50,7 @@ func (r *JobApplicationRepository) GetJobApplicationsByVacancyID(ctx context.Con
 	var applications []entity.JobApplication
 	for rows.Next() {
 		var application entity.JobApplication
-		if err := rows.Scan(&application.ID, &application.UserID, &application.VacancyID, &application.FirstName, &application.LastName, &application.Email, &application.Status, &application.AppliedAt); err != nil {
+		if err := rows.Scan(&application.ID, &application.UserID, &application.VacancyID, &application.FirstName, &application.LastName, &application.Email, &application.Status, &application.AppliedAt, &application.ResumeID, &application.AIMatchingScore); err != nil {
 			logger.Log.Error("Failed to scan job application", "error", err)
 			return nil, err
 		}
