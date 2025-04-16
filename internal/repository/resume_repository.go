@@ -5,7 +5,9 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/lib/pq"
+	"jumyste-app-backend/internal/dto"
 	"jumyste-app-backend/internal/entity"
 	"jumyste-app-backend/pkg/logger"
 )
@@ -145,4 +147,90 @@ func (r *ResumeRepository) GetByID(ctx context.Context, resumeID int) (*entity.R
 	}
 
 	return &resume, nil
+}
+
+func (r *ResumeRepository) FilterCandidates(ctx context.Context, filter dto.CandidateFilter) ([]entity.JobApplicationWithResume, error) {
+	query := `
+		SELECT
+			ja.id, ja.user_id, ja.vacancy_id, ja.first_name, ja.last_name, ja.email, ja.status, ja.applied_at, ja.resume_id, ja.ai_matching_score,
+			r.id, r.full_name, r.desired_position, r.skills, r.city, r.about, r.parsed_data, r.created_at,
+			u.id, u.email, u.first_name, u.last_name, u.profile_picture, u.role_id
+		FROM job_applications ja
+		JOIN resume r ON ja.resume_id = r.id
+		JOIN users u ON r.user_id = u.id
+		WHERE 1=1
+	`
+
+	args := []interface{}{}
+	argID := 1
+
+	if filter.AIMatchMin > 0 {
+		query += fmt.Sprintf(" AND ja.ai_matching_score >= $%d", argID)
+		args = append(args, filter.AIMatchMin)
+		argID++
+	}
+
+	if len(filter.Skills) > 0 {
+		query += fmt.Sprintf(" AND r.skills && $%d", argID) // PostgreSQL array intersection
+		args = append(args, pq.Array(filter.Skills))
+		argID++
+	}
+
+	if filter.City != "" {
+		query += fmt.Sprintf(" AND r.city ILIKE $%d", argID)
+		args = append(args, "%"+filter.City+"%")
+		argID++
+	}
+
+	if filter.Position != "" {
+		query += fmt.Sprintf(" AND r.desired_position ILIKE $%d", argID)
+		args = append(args, "%"+filter.Position+"%")
+		argID++
+	}
+
+	rows, err := r.DB.QueryContext(ctx, query, args...)
+	if err != nil {
+		logger.Log.Error("Failed to filter candidates", "error", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []entity.JobApplicationWithResume
+
+	for rows.Next() {
+		var app entity.JobApplication
+		var resume entity.Resume
+		var user entity.User
+
+		var skills []string
+		var parsedData []byte
+
+		err := rows.Scan(
+			&app.ID, &app.UserID, &app.VacancyID, &app.FirstName, &app.LastName, &app.Email, &app.Status, &app.AppliedAt, &app.ResumeID, &app.AIMatchingScore,
+			&resume.ID, &resume.FullName, &resume.DesiredPosition, pq.Array(&skills), &resume.City, &resume.About, &parsedData, &resume.CreatedAt,
+			&user.ID, &user.Email, &user.FirstName, &user.LastName, &user.ProfilePicture, &user.RoleId,
+		)
+		if err != nil {
+			logger.Log.Error("Failed to scan row", "error", err)
+			continue
+		}
+
+		resume.Skills = skills
+		if len(parsedData) > 0 {
+			if err := json.Unmarshal(parsedData, &resume.ParsedData); err != nil {
+				logger.Log.Error("Failed to unmarshal parsed_data in GetByID", "error", err)
+				return nil, err
+			}
+		}
+
+		appWithResume := entity.JobApplicationWithResume{
+			JobApplication: app,
+			Resume:         resume,
+			User:           user,
+		}
+
+		results = append(results, appWithResume)
+	}
+
+	return results, nil
 }

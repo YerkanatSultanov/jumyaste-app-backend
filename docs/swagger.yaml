@@ -86,6 +86,8 @@ definitions:
     type: object
   jumyste-app-backend_internal_dto.JobApplicationWithResumeResponse:
     properties:
+      ai_matching_score:
+        type: integer
       applied_at:
         type: string
       email:
@@ -365,6 +367,33 @@ definitions:
           $ref: '#/definitions/jumyste-app-backend_internal_entity.UserResponse'
         type: array
     type: object
+  jumyste-app-backend_internal_entity.JobApplicationWithResume:
+    properties:
+      ai_matching_score:
+        type: integer
+      applied_at:
+        type: string
+      email:
+        type: string
+      first_name:
+        type: string
+      id:
+        type: integer
+      last_name:
+        type: string
+      resume:
+        $ref: '#/definitions/jumyste-app-backend_internal_entity.Resume'
+      resume_id:
+        type: integer
+      status:
+        type: string
+      user:
+        $ref: '#/definitions/jumyste-app-backend_internal_entity.User'
+      user_id:
+        type: integer
+      vacancy_id:
+        type: integer
+    type: object
   jumyste-app-backend_internal_entity.Message:
     properties:
       chat_id:
@@ -404,6 +433,51 @@ definitions:
     - VideoMessage
     - AudioMessage
     - FileMessage
+  jumyste-app-backend_internal_entity.Resume:
+    properties:
+      about:
+        type: string
+      city:
+        type: string
+      created_at:
+        type: string
+      desired_position:
+        type: string
+      full_name:
+        type: string
+      id:
+        type: integer
+      parsed_data:
+        additionalProperties: true
+        type: object
+      skills:
+        items:
+          type: string
+        type: array
+      user_id:
+        type: integer
+    type: object
+  jumyste-app-backend_internal_entity.User:
+    properties:
+      company_id:
+        type: integer
+      department_id:
+        type: integer
+      email:
+        type: string
+      first_name:
+        type: string
+      id:
+        type: integer
+      last_name:
+        type: string
+      password:
+        type: string
+      profile_picture:
+        type: string
+      role_id:
+        type: integer
+    type: object
   jumyste-app-backend_internal_entity.UserResponse:
     properties:
       created_at:
@@ -1182,6 +1256,55 @@ paths:
       security:
       - BearerAuth: []
       summary: Get a resume by user ID
+      tags:
+      - Resume
+  /resume/candidates:
+    get:
+      consumes:
+      - application/json
+      description: Filter candidates using multiple query parameters such as AI match
+        score, skills, city, and position.
+      parameters:
+      - description: Minimum AI match score
+        in: query
+        name: ai_match
+        type: integer
+      - description: Skills (can be passed multiple times)
+        in: query
+        name: skills
+        type: string
+      - description: City of the candidate
+        in: query
+        name: city
+        type: string
+      - description: Desired position of the candidate
+        in: query
+        name: position
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of filtered candidates
+          schema:
+            items:
+              $ref: '#/definitions/jumyste-app-backend_internal_entity.JobApplicationWithResume'
+            type: array
+        "400":
+          description: Invalid query parameters
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "500":
+          description: Failed to filter candidates
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Filter candidates based on specified criteria
       tags:
       - Resume
   /resume/manual:

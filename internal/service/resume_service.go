@@ -182,3 +182,15 @@ func (s *ResumeService) DeleteResumeByUserID(ctx context.Context, userID int) er
 
 	return nil
 }
+
+func (s *ResumeService) FilterCandidates(ctx context.Context, filter dto.CandidateFilter) ([]entity.JobApplicationWithResume, error) {
+	logger.Log.Info("Filtering candidates...", "filter", filter)
+
+	results, err := s.ResumeRepository.FilterCandidates(ctx, filter)
+	if err != nil {
+		logger.Log.Error("Failed to filter candidates", "error", err)
+		return nil, err
+	}
+
+	return results, nil
+}

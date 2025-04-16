@@ -2,6 +2,7 @@ package handler
 
 import (
 	"jumyste-app-backend/internal/dto"
+	_ "jumyste-app-backend/internal/entity"
 	"net/http"
 	"strconv"
 
@@ -192,4 +193,39 @@ func (h *ResumeHandler) DeleteResumeByUserID(c *gin.Context) {
 	c.JSON(http.StatusOK, dto.SuccessResponse{
 		Message: "Resume deleted successfully",
 	})
+}
+
+// FilterCandidates godoc
+// @Summary Filter candidates based on specified criteria
+// @Description Filter candidates using multiple query parameters such as AI match score, skills, city, and position.
+// @Tags Resume
+// @Accept json
+// @Produce json
+// @Param ai_match query int false "Minimum AI match score"
+// @Param skills query string false "Skills (can be passed multiple times)"
+// @Param city query string false "City of the candidate"
+// @Param position query string false "Desired position of the candidate"
+// @Security BearerAuth
+// @Success 200 {array} entity.JobApplicationWithResume "List of filtered candidates"
+// @Failure 400 {object} dto.ErrorResponse "Invalid query parameters"
+// @Failure 401 {object} dto.ErrorResponse "Unauthorized"
+// @Failure 500 {object} dto.ErrorResponse "Failed to filter candidates"
+// @Router /resume/candidates [get]
+func (h *ResumeHandler) FilterCandidates(c *gin.Context) {
+	var filter dto.CandidateFilter
+
+	if err := c.ShouldBindQuery(&filter); err != nil {
+		logger.Log.Warn("Invalid filter query params", "error", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid query parameters"})
+		return
+	}
+
+	ctx := c.Request.Context()
+	candidates, err := h.ResumeService.FilterCandidates(ctx, filter)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to filter candidates"})
+		return
+	}
+
+	c.JSON(http.StatusOK, candidates)
 }

@@ -18,4 +18,5 @@ type JobApplication struct {
 type JobApplicationWithResume struct {
 	JobApplication
 	Resume Resume `json:"resume"`
+	User   User   `json:"user"`
 }

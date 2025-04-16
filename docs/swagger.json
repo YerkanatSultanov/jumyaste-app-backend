@@ -1069,6 +1069,81 @@
                 }
             }
         },
+        "/resume/candidates": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Filter candidates using multiple query parameters such as AI match score, skills, city, and position.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Resume"
+                ],
+                "summary": "Filter candidates based on specified criteria",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Minimum AI match score",
+                        "name": "ai_match",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Skills (can be passed multiple times)",
+                        "name": "skills",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "City of the candidate",
+                        "name": "city",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Desired position of the candidate",
+                        "name": "position",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of filtered candidates",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/jumyste-app-backend_internal_entity.JobApplicationWithResume"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid query parameters",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to filter candidates",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/resume/manual": {
             "post": {
                 "security": [
@@ -2078,6 +2153,9 @@
         "jumyste-app-backend_internal_dto.JobApplicationWithResumeResponse": {
             "type": "object",
             "properties": {
+                "ai_matching_score": {
+                    "type": "integer"
+                },
                 "applied_at": {
                     "type": "string"
                 },
@@ -2480,6 +2558,47 @@
                 }
             }
         },
+        "jumyste-app-backend_internal_entity.JobApplicationWithResume": {
+            "type": "object",
+            "properties": {
+                "ai_matching_score": {
+                    "type": "integer"
+                },
+                "applied_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "last_name": {
+                    "type": "string"
+                },
+                "resume": {
+                    "$ref": "#/definitions/jumyste-app-backend_internal_entity.Resume"
+                },
+                "resume_id": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/jumyste-app-backend_internal_entity.User"
+                },
+                "user_id": {
+                    "type": "integer"
+                },
+                "vacancy_id": {
+                    "type": "integer"
+                }
+            }
+        },
         "jumyste-app-backend_internal_entity.Message": {
             "type": "object",
             "properties": {
@@ -2534,6 +2653,74 @@
                 "AudioMessage",
                 "FileMessage"
             ]
+        },
+        "jumyste-app-backend_internal_entity.Resume": {
+            "type": "object",
+            "properties": {
+                "about": {
+                    "type": "string"
+                },
+                "city": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "desired_position": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "parsed_data": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "skills": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "jumyste-app-backend_internal_entity.User": {
+            "type": "object",
+            "properties": {
+                "company_id": {
+                    "type": "integer"
+                },
+                "department_id": {
+                    "type": "integer"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "last_name": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "profile_picture": {
+                    "type": "string"
+                },
+                "role_id": {
+                    "type": "integer"
+                }
+            }
         },
         "jumyste-app-backend_internal_entity.UserResponse": {
             "type": "object",
