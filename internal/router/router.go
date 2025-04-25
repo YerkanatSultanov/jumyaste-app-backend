@@ -112,6 +112,7 @@ func SetupRouter(
 		jobApp.GET("/:vacancy_id", jobApplicationHandler.GetJobApplicationsByVacancyID)
 		jobApp.PUT("/:application_id/status/:status", jobApplicationHandler.UpdateJobApplicationStatus)
 		jobApp.DELETE("/:application_id", jobApplicationHandler.DeleteJobApplication)
+		jobApp.GET("/analytics", jobApplicationHandler.GetJobAppAnalytics)
 	}
 
 	// --- WebSocket ---

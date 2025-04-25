@@ -82,3 +82,35 @@ func (r *JobApplicationRepository) DeleteJobApplication(ctx context.Context, app
 	}
 	return nil
 }
+
+func (r *JobApplicationRepository) GetJobAppAnalytics(ctx context.Context, hrID int) ([]entity.ApplicationStatusStat, error) {
+	query := `
+		SELECT ja.status, COUNT(*) as count
+		FROM job_applications ja
+		JOIN vacancies v ON ja.vacancy_id = v.id
+		WHERE v.created_by = $1
+		GROUP BY ja.status;
+	`
+
+	rows, err := r.DB.QueryContext(ctx, query, hrID)
+	if err != nil {
+		logger.Log.Error("Failed to get job application status stats", "error", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var stats []entity.ApplicationStatusStat
+	for rows.Next() {
+		var stat entity.ApplicationStatusStat
+		if err := rows.Scan(&stat.Status, &stat.Count); err != nil {
+			return nil, err
+		}
+		stats = append(stats, stat)
+	}
+
+	if len(stats) == 0 {
+		return nil, nil
+	}
+
+	return stats, nil
+}

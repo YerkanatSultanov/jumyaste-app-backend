@@ -156,3 +156,30 @@ func (s *JobApplicationService) DeleteJobApplication(ctx context.Context, applic
 	}
 	return nil
 }
+
+func (s *JobApplicationService) GetJobAppAnalytics(ctx context.Context, hrID int) ([]entity.ApplicationStatusStat, error) {
+	logger.Log.Info("Fetching job application analytics", "hr_id", hrID)
+
+	stats, err := s.JobApplicationRepo.GetJobAppAnalytics(ctx, hrID)
+	if err != nil {
+		logger.Log.Error("Failed to get job application analytics", "hr_id", hrID, "error", err)
+		return nil, err
+	}
+
+	totalCount := 0
+	for _, stat := range stats {
+		totalCount += stat.Count
+	}
+
+	if totalCount == 0 {
+		logger.Log.Info("No job applications found for analytics", "hr_id", hrID)
+		return stats, nil
+	}
+
+	for i := range stats {
+		stats[i].Percentage = float64(stats[i].Count) / float64(totalCount) * 100
+	}
+
+	logger.Log.Info("Successfully fetched job application analytics", "hr_id", hrID, "total_count", totalCount)
+	return stats, nil
+}

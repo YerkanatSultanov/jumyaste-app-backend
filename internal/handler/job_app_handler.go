@@ -158,3 +158,17 @@ func (h *JobApplicationHandler) DeleteJobApplication(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"status": "deleted"})
 }
+func (h *JobApplicationHandler) GetJobAppAnalytics(c *gin.Context) {
+	userID := c.GetInt("user_id")
+	logger.Log.Info("Getting HR analytics", "user_id", userID)
+
+	stats, err := h.JobApplicationService.GetJobAppAnalytics(c.Request.Context(), userID)
+	if err != nil {
+		logger.Log.Error("Failed to get HR analytics", "error", err, "user_id", userID)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get analytics"})
+		return
+	}
+
+	logger.Log.Info("Successfully retrieved HR analytics", "user_id", userID, "stats_count", len(stats))
+	c.JSON(http.StatusOK, stats)
+}
