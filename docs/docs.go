@@ -699,6 +699,101 @@ const docTemplate = `{
                 }
             }
         },
+        "/jobs/analytics": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves analytical statistics for job applications assigned to the HR user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Job Applications"
+                ],
+                "summary": "Get HR analytics for job applications",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/jumyste-app-backend_internal_dto.JobAppStatusAnalytics"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to get analytics",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/jobs/application/{application_id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve a specific job application with resume details",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Job Applications"
+                ],
+                "summary": "Get a job application by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Application ID",
+                        "name": "application_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.JobApplicationWithResumeResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid application ID",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to retrieve application",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/jobs/apply/{vacancy_id}": {
             "post": {
                 "security": [
@@ -2194,9 +2289,13 @@ const docTemplate = `{
         "jumyste-app-backend_internal_dto.CreateDepartmentRequest": {
             "type": "object",
             "required": [
+                "color",
                 "name"
             ],
             "properties": {
+                "color": {
+                    "type": "string"
+                },
                 "name": {
                     "type": "string"
                 }
@@ -2278,6 +2377,23 @@ const docTemplate = `{
                 }
             }
         },
+        "jumyste-app-backend_internal_dto.JobAppStatusAnalytics": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "percentage": {
+                    "type": "integer",
+                    "example": 50
+                },
+                "status": {
+                    "type": "string",
+                    "example": "new"
+                }
+            }
+        },
         "jumyste-app-backend_internal_dto.JobApplicationResponse": {
             "type": "object",
             "properties": {
@@ -2312,6 +2428,12 @@ const docTemplate = `{
             "properties": {
                 "ai_matching_score": {
                     "type": "integer"
+                },
+                "ai_strengths": {
+                    "type": "string"
+                },
+                "ai_weaknesses": {
+                    "type": "string"
                 },
                 "applied_at": {
                     "type": "string"
@@ -2738,6 +2860,9 @@ const docTemplate = `{
         "jumyste-app-backend_internal_entity.Department": {
             "type": "object",
             "properties": {
+                "color": {
+                    "type": "string"
+                },
                 "company_id": {
                     "type": "integer"
                 },
@@ -2757,6 +2882,12 @@ const docTemplate = `{
             "properties": {
                 "ai_matching_score": {
                     "type": "integer"
+                },
+                "ai_strengths": {
+                    "type": "string"
+                },
+                "ai_weaknesses": {
+                    "type": "string"
                 },
                 "applied_at": {
                     "type": "string"

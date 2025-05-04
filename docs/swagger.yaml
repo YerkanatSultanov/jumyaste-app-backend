@@ -11,9 +11,12 @@ definitions:
     type: object
   jumyste-app-backend_internal_dto.CreateDepartmentRequest:
     properties:
+      color:
+        type: string
       name:
         type: string
     required:
+    - color
     - name
     type: object
   jumyste-app-backend_internal_dto.CreateVacancyRequest:
@@ -69,6 +72,18 @@ definitions:
       new_vacancies_count:
         type: integer
     type: object
+  jumyste-app-backend_internal_dto.JobAppStatusAnalytics:
+    properties:
+      count:
+        example: 1
+        type: integer
+      percentage:
+        example: 50
+        type: integer
+      status:
+        example: new
+        type: string
+    type: object
   jumyste-app-backend_internal_dto.JobApplicationResponse:
     properties:
       applied_at:
@@ -92,6 +107,10 @@ definitions:
     properties:
       ai_matching_score:
         type: integer
+      ai_strengths:
+        type: string
+      ai_weaknesses:
+        type: string
       applied_at:
         type: string
       email:
@@ -386,6 +405,8 @@ definitions:
     type: object
   jumyste-app-backend_internal_entity.Department:
     properties:
+      color:
+        type: string
       company_id:
         type: integer
       hr_count:
@@ -399,6 +420,10 @@ definitions:
     properties:
       ai_matching_score:
         type: integer
+      ai_strengths:
+        type: string
+      ai_weaknesses:
+        type: string
       applied_at:
         type: string
       email:
@@ -1114,6 +1139,67 @@ paths:
       security:
       - BearerAuth: []
       summary: Get job applications by vacancy ID
+      tags:
+      - Job Applications
+  /jobs/analytics:
+    get:
+      description: Retrieves analytical statistics for job applications assigned to
+        the HR user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/jumyste-app-backend_internal_dto.JobAppStatusAnalytics'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "500":
+          description: Failed to get analytics
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get HR analytics for job applications
+      tags:
+      - Job Applications
+  /jobs/application/{application_id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a specific job application with resume details
+      parameters:
+      - description: Application ID
+        in: path
+        name: application_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.JobApplicationWithResumeResponse'
+        "400":
+          description: Invalid application ID
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "500":
+          description: Failed to retrieve application
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get a job application by ID
       tags:
       - Job Applications
   /jobs/apply/{vacancy_id}:

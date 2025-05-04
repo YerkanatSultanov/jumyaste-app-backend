@@ -202,10 +202,21 @@ func (c *OpenAIClient) GenerateVacancyDescription(input dto.VacancyInput) (strin
 	return description, nil
 }
 
-func (c *OpenAIClient) GetMatchingScore(resumeText string, vacancyDescription string) (int, error) {
+type MatchingResult struct {
+	Score      int
+	Strengths  string
+	Weaknesses string
+}
+
+func (c *OpenAIClient) GetMatchingScore(resumeText string, vacancyDescription string) (*MatchingResult, error) {
 	prompt := fmt.Sprintf(`
-Оцени, насколько данное резюме соответствует описанию вакансии, по шкале от 0 до 100.
-Ответь только одним числом — процент соответствия. Никаких пояснений, текста или JSON.
+Оцени соответствие резюме описанию вакансии по шкале от 0 до 100.
+Затем обязательно укажи 2–3 сильные стороны и 2–3 слабые стороны кандидата.
+
+Ответ **только строго в формате**:
+Оценка: <число>
+Преимущества: <список через запятую>
+Недостатки: <список через запятую>
 
 Резюме:
 %s
@@ -217,17 +228,17 @@ func (c *OpenAIClient) GetMatchingScore(resumeText string, vacancyDescription st
 	requestBody, err := json.Marshal(OpenAIRequest{
 		Model: "gpt-4o-mini",
 		Messages: []Message{
-			{Role: "system", Content: "Ты AI-рекрутер. Твоя задача — оценить соответствие кандидата вакансии по шкале от 0 до 100. Отвечай только числом."},
+			{Role: "system", Content: "Ты AI-рекрутер. Оцени соответствие кандидата вакансии, дай сильные и слабые стороны. Ответ строго в нужном формате."},
 			{Role: "user", Content: prompt},
 		},
 	})
 	if err != nil {
-		return 0, fmt.Errorf("failed to encode matching request: %w", err)
+		return nil, fmt.Errorf("failed to encode analysis request: %w", err)
 	}
 
 	req, err := http.NewRequest("POST", "https://api.openai.com/v1/chat/completions", bytes.NewBuffer(requestBody))
 	if err != nil {
-		return 0, fmt.Errorf("failed to create matching request: %w", err)
+		return nil, fmt.Errorf("failed to create analysis request: %w", err)
 	}
 
 	req.Header.Set("Authorization", "Bearer "+c.APIKey)
@@ -235,34 +246,52 @@ func (c *OpenAIClient) GetMatchingScore(resumeText string, vacancyDescription st
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return 0, fmt.Errorf("failed to send matching request: %w", err)
+		return nil, fmt.Errorf("failed to send analysis request: %w", err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return 0, fmt.Errorf("failed to read matching response: %w", err)
+		return nil, fmt.Errorf("failed to read analysis response: %w", err)
 	}
-
-	log.Printf("Raw matching response: %s", string(body))
 
 	var openAIResp OpenAIResponse
 	if err := json.Unmarshal(body, &openAIResp); err != nil {
-		return 0, fmt.Errorf("failed to parse matching response: %w", err)
+		return nil, fmt.Errorf("failed to parse analysis response: %w", err)
 	}
 
 	if len(openAIResp.Choices) == 0 {
-		return 0, fmt.Errorf("empty matching response")
+		return nil, fmt.Errorf("empty analysis response")
 	}
 
 	text := strings.TrimSpace(openAIResp.Choices[0].Message.Content)
-	text = strings.TrimSuffix(text, "%")
+	lines := strings.Split(text, "\n")
 
-	score, err := strconv.Atoi(text)
-	if err != nil {
-		log.Printf("Failed to parse score from text: %s", text)
-		return 0, fmt.Errorf("invalid score format: %w", err)
+	result := &MatchingResult{}
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+
+		switch {
+		case strings.HasPrefix(line, "Оценка:"):
+			scoreStr := strings.TrimSpace(strings.TrimPrefix(line, "Оценка:"))
+			score, err := strconv.Atoi(scoreStr)
+			if err != nil {
+				return nil, fmt.Errorf("invalid score format: %w", err)
+			}
+			result.Score = score
+
+		case strings.HasPrefix(line, "Преимущества:"),
+			strings.HasPrefix(line, "Плюсы:"):
+			value := strings.TrimSpace(strings.SplitN(line, ":", 2)[1])
+			result.Strengths = value
+
+		case strings.HasPrefix(line, "Недостатки:"),
+			strings.HasPrefix(line, "Минусы:"):
+			value := strings.TrimSpace(strings.SplitN(line, ":", 2)[1])
+			result.Weaknesses = value
+		}
 	}
 
-	return score, nil
+	return result, nil
 }

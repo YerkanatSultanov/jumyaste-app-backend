@@ -82,6 +82,7 @@ func (h *DepartmentsHandler) CreateDepartment(c *gin.Context) {
 
 	dep := &entity.Department{
 		Name:      req.Name,
+		Color:     req.Color,
 		CompanyId: companyID.(int),
 		HrCount:   0,
 	}

@@ -78,7 +78,9 @@ func (s *JobApplicationService) ApplyForJob(
 		LastName:        lastName,
 		Email:           email,
 		Status:          "new",
-		AIMatchingScore: matchScore,
+		AIMatchingScore: matchScore.Score,
+		AIStrengths:     matchScore.Strengths,
+		AIWeaknesses:    matchScore.Weaknesses,
 	}
 
 	err = s.JobApplicationRepo.CreateJobApplication(ctx, application)
@@ -106,15 +108,17 @@ func (s *JobApplicationService) GetJobApplicationsByVacancyID(ctx context.Contex
 		}
 
 		appResponse := dto.JobApplicationWithResumeResponse{
-			ID:              app.ID,
-			UserID:          app.UserID,
-			VacancyID:       app.VacancyID,
-			FirstName:       user.FirstName,
-			LastName:        user.LastName,
-			Email:           user.Email,
-			Status:          app.Status,
-			AppliedAt:       app.AppliedAt.Format("2006-01-02 15:04:05"),
-			AIMatchingScore: app.AIMatchingScore,
+			ID:                app.ID,
+			UserID:            app.UserID,
+			VacancyID:         app.VacancyID,
+			FirstName:         user.FirstName,
+			LastName:          user.LastName,
+			Email:             user.Email,
+			Status:            app.Status,
+			AppliedAt:         app.AppliedAt.Format("2006-01-02 15:04:05"),
+			AIMatchingScore:   app.AIMatchingScore,
+			AIStrengths:       app.AIStrengths,
+			AIMatchWeaknesses: app.AIWeaknesses,
 			Resume: dto.ResumeResponse{
 				FullName:        resume.FullName,
 				DesiredPosition: resume.DesiredPosition,
@@ -182,4 +186,47 @@ func (s *JobApplicationService) GetJobAppAnalytics(ctx context.Context, hrID int
 
 	logger.Log.Info("Successfully fetched job application analytics", "hr_id", hrID, "total_count", totalCount)
 	return stats, nil
+}
+
+func (s *JobApplicationService) GetJobApplicationByID(ctx context.Context, applicationID int) (*dto.JobApplicationWithResumeResponse, error) {
+	app, err := s.JobApplicationRepo.GetJobApplicationByID(ctx, applicationID)
+	if err != nil {
+		return nil, err
+	}
+
+	resume, user, err := s.ResumeRepo.GetResumeByUserID(ctx, app.ResumeID)
+	if err != nil {
+		return nil, err
+	}
+
+	response := &dto.JobApplicationWithResumeResponse{
+		ID:                app.ID,
+		UserID:            app.UserID,
+		VacancyID:         app.VacancyID,
+		FirstName:         user.FirstName,
+		LastName:          user.LastName,
+		Email:             user.Email,
+		Status:            app.Status,
+		AppliedAt:         app.AppliedAt.Format("2006-01-02 15:04:05"),
+		AIMatchingScore:   app.AIMatchingScore,
+		AIStrengths:       app.AIStrengths,
+		AIMatchWeaknesses: app.AIWeaknesses,
+		Resume: dto.ResumeResponse{
+			FullName:        resume.FullName,
+			DesiredPosition: resume.DesiredPosition,
+			Skills:          resume.Skills,
+			City:            resume.City,
+			About:           resume.About,
+			ParsedData:      resume.ParsedData,
+			User: dto.UserResponse{
+				ID:             user.ID,
+				Email:          user.Email,
+				FirstName:      user.FirstName,
+				LastName:       user.LastName,
+				ProfilePicture: user.ProfilePicture,
+				RoleID:         user.RoleId,
+			},
+		},
+	}
+	return response, nil
 }

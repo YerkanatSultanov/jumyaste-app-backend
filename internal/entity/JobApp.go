@@ -13,6 +13,8 @@ type JobApplication struct {
 	AppliedAt       time.Time `json:"applied_at"`
 	ResumeID        int       `json:"resume_id"`
 	AIMatchingScore int       `json:"ai_matching_score"`
+	AIStrengths     string    `json:"ai_strengths"`
+	AIWeaknesses    string    `json:"ai_weaknesses"`
 }
 
 type JobApplicationWithResume struct {

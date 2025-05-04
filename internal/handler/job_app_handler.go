@@ -158,6 +158,17 @@ func (h *JobApplicationHandler) DeleteJobApplication(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"status": "deleted"})
 }
+
+// GetJobAppAnalytics godoc
+// @Summary Get HR analytics for job applications
+// @Description Retrieves analytical statistics for job applications assigned to the HR user
+// @Tags Job Applications
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {array} dto.JobAppStatusAnalytics
+// @Failure 401 {object} dto.ErrorResponse "Unauthorized"
+// @Failure 500 {object} dto.ErrorResponse "Failed to get analytics"
+// @Router /jobs/analytics [get]
 func (h *JobApplicationHandler) GetJobAppAnalytics(c *gin.Context) {
 	userID := c.GetInt("user_id")
 	logger.Log.Info("Getting HR analytics", "user_id", userID)
@@ -171,4 +182,34 @@ func (h *JobApplicationHandler) GetJobAppAnalytics(c *gin.Context) {
 
 	logger.Log.Info("Successfully retrieved HR analytics", "user_id", userID, "stats_count", len(stats))
 	c.JSON(http.StatusOK, stats)
+}
+
+// GetJobApplicationByID godoc
+// @Summary Get a job application by ID
+// @Description Retrieve a specific job application with resume details
+// @Tags Job Applications
+// @Accept json
+// @Produce json
+// @Param application_id path int true "Application ID"
+// @Security BearerAuth
+// @Success 200 {object} dto.JobApplicationWithResumeResponse
+// @Failure 400 {object} dto.ErrorResponse "Invalid application ID"
+// @Failure 401 {object} dto.ErrorResponse "Unauthorized"
+// @Failure 500 {object} dto.ErrorResponse "Failed to retrieve application"
+// @Router /jobs/application/{application_id} [get]
+func (h *JobApplicationHandler) GetJobApplicationByID(c *gin.Context) {
+	applicationIDStr := c.Param("application_id")
+	applicationID, err := strconv.Atoi(applicationIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid application ID"})
+		return
+	}
+
+	application, err := h.JobApplicationService.GetJobApplicationByID(c.Request.Context(), applicationID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve application"})
+		return
+	}
+
+	c.JSON(http.StatusOK, application)
 }

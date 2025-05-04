@@ -18,7 +18,7 @@ func NewDepartmentsRepo(db *sql.DB) *DepartmentsRepo {
 func (r *DepartmentsRepo) GetDepartmentsByCompanyID(companyID int) ([]*entity.Department, error) {
 	logger.Log.Info("Fetching departments by company ID", "company_id", companyID)
 
-	query := `SELECT id, company_id, name, hr_count FROM departments WHERE company_id = $1`
+	query := `SELECT id, color, company_id, name, hr_count FROM departments WHERE company_id = $1`
 	rows, err := r.DB.Query(query, companyID)
 	if err != nil {
 		logger.Log.Error("Error querying departments", "company_id", companyID, "error", err)
@@ -29,7 +29,7 @@ func (r *DepartmentsRepo) GetDepartmentsByCompanyID(companyID int) ([]*entity.De
 	var departments []*entity.Department
 	for rows.Next() {
 		var dep entity.Department
-		if err := rows.Scan(&dep.ID, &dep.CompanyId, &dep.Name, &dep.HrCount); err != nil {
+		if err := rows.Scan(&dep.ID, &dep.Color, &dep.CompanyId, &dep.Name, &dep.HrCount); err != nil {
 			logger.Log.Error("Error scanning department row", "error", err)
 			return nil, err
 		}
@@ -43,8 +43,8 @@ func (r *DepartmentsRepo) GetDepartmentsByCompanyID(companyID int) ([]*entity.De
 func (r *DepartmentsRepo) CreateDepartment(dep *entity.Department) error {
 	logger.Log.Info("Creating new department", "company_id", dep.CompanyId, "name", dep.Name, "hr_count", dep.HrCount)
 
-	query := `INSERT INTO departments (company_id, name, hr_count) VALUES ($1, $2, $3) RETURNING id`
-	err := r.DB.QueryRow(query, dep.CompanyId, dep.Name, dep.HrCount).Scan(&dep.ID)
+	query := `INSERT INTO departments (color, company_id, name, hr_count) VALUES ($1, $2, $3, $4) RETURNING id`
+	err := r.DB.QueryRow(query, dep.Color, dep.CompanyId, dep.Name, dep.HrCount).Scan(&dep.ID)
 	if err != nil {
 		logger.Log.Error("Error creating department", "error", err)
 		return err
@@ -70,10 +70,10 @@ func (r *DepartmentsRepo) IsUserOwnerOfCompany(userID int, companyID int) (bool,
 }
 
 func (r *DepartmentsRepo) GetDepartmentByID(depID int) (*entity.Department, error) {
-	query := `SELECT id, company_id, name, hr_count FROM departments WHERE id = $1`
+	query := `SELECT id, color, company_id, name, hr_count FROM departments WHERE id = $1`
 
 	var dep entity.Department
-	err := r.DB.QueryRow(query, depID).Scan(&dep.ID, &dep.CompanyId, &dep.Name, &dep.HrCount)
+	err := r.DB.QueryRow(query, depID).Scan(&dep.ID, &dep.Color, &dep.CompanyId, &dep.Name, &dep.HrCount)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil

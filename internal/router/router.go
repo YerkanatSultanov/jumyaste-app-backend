@@ -112,6 +112,7 @@ func SetupRouter(
 		jobApp.PUT("/:application_id/status/:status", jobApplicationHandler.UpdateJobApplicationStatus)
 		jobApp.DELETE("/:application_id", jobApplicationHandler.DeleteJobApplication)
 		jobApp.GET("/analytics", jobApplicationHandler.GetJobAppAnalytics)
+		jobApp.GET("/application/:application_id", jobApplicationHandler.GetJobApplicationByID)
 	}
 
 	departments := r.Group("/api/departments")
