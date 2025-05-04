@@ -14,6 +14,7 @@ type Config struct {
 	JWT      JWTConfig
 	SMTP     SMTPConfig
 	AI       AIConfig
+	AppEnv   AppEnv
 }
 
 type ServerConfig struct {
@@ -44,6 +45,10 @@ type SMTPConfig struct {
 
 type AIConfig struct {
 	APIKey string
+}
+
+type AppEnv struct {
+	AppEnv string
 }
 
 var AppConfig Config
@@ -78,6 +83,9 @@ func LoadConfig() {
 		},
 		AI: AIConfig{
 			APIKey: getEnv("OPENAI_API_KE", ""),
+		},
+		AppEnv: AppEnv{
+			AppEnv: getEnv("APP_ENV", "development"),
 		},
 	}
 }

@@ -1,4 +1,3 @@
-basePath: /api
 definitions:
   gin.H:
     additionalProperties: {}
@@ -530,12 +529,8 @@ definitions:
       work_format:
         type: string
     type: object
-host: localhost:8080
 info:
   contact: {}
-  description: API for Jumyste application
-  title: Jumyste App API
-  version: "1.0"
 paths:
   /auth/forgot-password:
     post:
@@ -1832,6 +1827,7 @@ paths:
       - Vacancies
 securityDefinitions:
   BearerAuth:
+    description: Type "Bearer" followed by a space and your JWT token.
     in: header
     name: Authorization
     type: apiKey

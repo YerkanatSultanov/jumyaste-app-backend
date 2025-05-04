@@ -1,13 +1,8 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "API for Jumyste application",
-        "title": "Jumyste App API",
-        "contact": {},
-        "version": "1.0"
+        "contact": {}
     },
-    "host": "localhost:8080",
-    "basePath": "/api",
     "paths": {
         "/auth/forgot-password": {
             "post": {
@@ -2804,6 +2799,7 @@
     },
     "securityDefinitions": {
         "BearerAuth": {
+            "description": "Type \"Bearer\" followed by a space and your JWT token.",
             "type": "apiKey",
             "name": "Authorization",
             "in": "header"

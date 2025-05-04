@@ -2,8 +2,6 @@ package router
 
 import (
 	"github.com/gin-gonic/gin"
-	swaggerFiles "github.com/swaggo/files"
-	"github.com/swaggo/gin-swagger"
 	_ "jumyste-app-backend/docs"
 	"jumyste-app-backend/internal/handler"
 	"jumyste-app-backend/internal/middleware"
@@ -25,7 +23,7 @@ func SetupRouter(
 	r.Use(middleware.CORSMiddleware())
 
 	// Swagger documentation route
-	r.GET("api/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	//r.GET("api/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// --- Аутентификация ---
 	auth := r.Group("/api/auth")

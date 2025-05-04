@@ -1,22 +1,22 @@
-// @title Jumyste App API
-// @version 1.0
-// @description API for Jumyste application
-// @host localhost:8080
-// @BasePath /api
-
-// @securityDefinitions.apikey	BearerAuth
-// @type						apiKey
-// @name						Authorization
-// @in							header
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Type "Bearer" followed by a space and your JWT token.
 package main
 
 import (
 	"fmt"
+	"github.com/gin-gonic/gin"
+	_ "github.com/swaggo/files"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"jumyste-app-backend/config"
+	"jumyste-app-backend/docs"
 	"jumyste-app-backend/internal/applicator"
 	"jumyste-app-backend/internal/middleware"
 	"jumyste-app-backend/internal/router"
 	"jumyste-app-backend/pkg/logger"
+	"os"
 )
 
 func main() {
@@ -45,8 +45,28 @@ func main() {
 	serverPort := config.AppConfig.Server.Port
 	addr := fmt.Sprintf(":%s", serverPort)
 	logger.Log.Info("Starting server", "port", serverPort)
-
+	setupSwagger(r)
 	if err := r.Run(addr); err != nil {
 		logger.Log.Error("Failed to start server", "error", err.Error())
 	}
+
+}
+
+func setupSwagger(r *gin.Engine) {
+	docs.SwaggerInfo.Title = "Jumyste App API"
+	docs.SwaggerInfo.Version = "1.0"
+	docs.SwaggerInfo.Description = "API for Jumyste application"
+
+	env := os.Getenv("APP_ENV")
+	if env == "production" {
+		docs.SwaggerInfo.Host = "jumyaste-app-backend-production.up.railway.app"
+		docs.SwaggerInfo.BasePath = "/api"
+		docs.SwaggerInfo.Schemes = []string{"https"}
+	} else {
+		docs.SwaggerInfo.Host = "localhost:8080"
+		docs.SwaggerInfo.BasePath = "/api"
+		docs.SwaggerInfo.Schemes = []string{"http"}
+	}
+
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 }
