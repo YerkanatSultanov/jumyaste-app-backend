@@ -17,9 +17,8 @@ func NewInvitationHandler(service *service.InvitationService) *InvitationHandler
 }
 
 type SendInvitationRequest struct {
-	Email     string `json:"email"`
-	CompanyID int    `json:"company_id"`
-	DepID     int    `json:"dep_id"`
+	Email string `json:"email"`
+	DepID int    `json:"dep_id"`
 }
 
 // SendInvitationHandler godoc
@@ -42,12 +41,13 @@ func (h *InvitationHandler) SendInvitationHandler(c *gin.Context) {
 		return
 	}
 
-	if req.Email == "" || req.CompanyID == 0 || req.DepID == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing required fields"})
+	companyID, exists := c.Get("company_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
-	err := h.service.SendInvitation(req.Email, req.CompanyID, req.DepID)
+	err := h.service.SendInvitation(req.Email, companyID.(int), req.DepID)
 	if err != nil {
 		logger.Log.Error("Failed to send invitation", "email", req.Email, "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send invitation"})

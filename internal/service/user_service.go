@@ -4,15 +4,17 @@ import (
 	"jumyste-app-backend/internal/entity"
 	"jumyste-app-backend/internal/repository"
 	"jumyste-app-backend/pkg/logger"
+	"jumyste-app-backend/utils"
 	"log/slog"
 )
 
 type UserService struct {
-	UserRepo *repository.UserRepository
+	UserRepo    *repository.UserRepository
+	CompanyRepo *repository.CompanyRepository
 }
 
-func NewUserService(userRepo *repository.UserRepository) *UserService {
-	return &UserService{UserRepo: userRepo}
+func NewUserService(userRepo *repository.UserRepository, companyRepo *repository.CompanyRepository) *UserService {
+	return &UserService{UserRepo: userRepo, CompanyRepo: companyRepo}
 }
 
 func (s *UserService) CreateUser(user *entity.User) error {
@@ -40,6 +42,28 @@ func (s *UserService) GetUserByID(id int) (*entity.UserResponse, error) {
 	return user, nil
 }
 
+func (s *UserService) GetUserByIDWithClaims(claims *utils.Claims) (*entity.UserResponse, error) {
+	logger.Log.Info("Fetching user by ID", slog.Int("user_id", claims.UserID))
+
+	user, err := s.UserRepo.GetUserByID(claims.UserID)
+	if err != nil {
+		logger.Log.Error("Failed to fetch user", slog.Int("user_id", claims.UserID), slog.String("error", err.Error()))
+		return nil, err
+	}
+
+	const hrRoleID = 2
+	if claims.RoleID == hrRoleID {
+		company, err := s.CompanyRepo.GetByID(claims.CompanyID)
+		if err == nil {
+			user.Company = company
+		} else {
+			logger.Log.Warn("Failed to fetch company", slog.Int("company_id", claims.CompanyID), slog.String("error", err.Error()))
+		}
+	}
+
+	logger.Log.Info("User fetched successfully", slog.Int("user_id", claims.UserID))
+	return user, nil
+}
 func (s *UserService) UpdateUser(userID int, updates map[string]interface{}) error {
 	logger.Log.Info("Service: Updating user", slog.Int("user_id", userID), slog.Any("updates", updates))
 

@@ -505,6 +505,40 @@ const docTemplate = `{
                 }
             }
         },
+        "/departments/all": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves a list of all vacancies",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Departments"
+                ],
+                "summary": "Get all Departments",
+                "responses": {
+                    "200": {
+                        "description": "List of departments",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/jumyste-app-backend_internal_entity.Department"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to fetch departments",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/invitations": {
             "post": {
                 "security": [
@@ -2040,9 +2074,6 @@ const docTemplate = `{
         "internal_handler.SendInvitationRequest": {
             "type": "object",
             "properties": {
-                "company_id": {
-                    "type": "integer"
-                },
                 "dep_id": {
                     "type": "integer"
                 },
@@ -2564,6 +2595,43 @@ const docTemplate = `{
                 }
             }
         },
+        "jumyste-app-backend_internal_entity.Company": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "ownerId": {
+                    "type": "integer"
+                },
+                "photoUrl": {
+                    "type": "string"
+                }
+            }
+        },
+        "jumyste-app-backend_internal_entity.Department": {
+            "type": "object",
+            "properties": {
+                "company_id": {
+                    "type": "integer"
+                },
+                "hr_count": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "jumyste-app-backend_internal_entity.JobApplicationWithResume": {
             "type": "object",
             "properties": {
@@ -2731,6 +2799,9 @@ const docTemplate = `{
         "jumyste-app-backend_internal_entity.UserResponse": {
             "type": "object",
             "properties": {
+                "company": {
+                    "$ref": "#/definitions/jumyste-app-backend_internal_entity.Company"
+                },
                 "created_at": {
                     "type": "string"
                 },

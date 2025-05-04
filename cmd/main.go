@@ -40,6 +40,7 @@ func main() {
 		app.WSHandler,
 		app.InvitationHandler,
 		app.JobAppHandler,
+		app.DepartmentHandler,
 	)
 
 	serverPort := config.AppConfig.Server.Port

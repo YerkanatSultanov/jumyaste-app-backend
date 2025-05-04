@@ -32,6 +32,7 @@ func (r *UserRepository) GetUserByID(id int) (*entity.UserResponse, error) {
 	err := row.Scan(&user.ID, &user.Email, &user.FirstName, &user.LastName, &user.ProfilePicture, &user.CreatedAt)
 	return &user, err
 }
+
 func (r *UserRepository) UpdateUser(userID int, updates map[string]interface{}) error {
 	if len(updates) == 0 {
 		return errors.New("no fields to update")

@@ -18,6 +18,7 @@ func SetupRouter(
 	wsHandler *handler.WebSocketHandler,
 	invitationHandler *handler.InvitationHandler,
 	jobApplicationHandler *handler.JobApplicationHandler,
+	departmentHandler *handler.DepartmentsHandler,
 ) *gin.Engine {
 	r := gin.Default()
 	r.Use(middleware.CORSMiddleware())
@@ -111,6 +112,12 @@ func SetupRouter(
 		jobApp.PUT("/:application_id/status/:status", jobApplicationHandler.UpdateJobApplicationStatus)
 		jobApp.DELETE("/:application_id", jobApplicationHandler.DeleteJobApplication)
 		jobApp.GET("/analytics", jobApplicationHandler.GetJobAppAnalytics)
+	}
+
+	departments := r.Group("/api/departments")
+	departments.Use(authMiddleware.VerifyTokenMiddleware())
+	{
+		departments.GET("/all", departmentHandler.GetMyDepartments)
 	}
 
 	// --- WebSocket ---

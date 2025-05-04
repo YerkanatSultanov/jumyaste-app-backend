@@ -6,6 +6,7 @@ import (
 	"jumyste-app-backend/internal/entity"
 	"jumyste-app-backend/internal/service"
 	"jumyste-app-backend/pkg/logger"
+	"jumyste-app-backend/utils"
 	"log/slog"
 	"net/http"
 )
@@ -46,19 +47,19 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 // @Failure      500  {object}  dto.ErrorResponse  "Internal server error - Invalid user ID type"
 // @Router       /users/me [get]
 func (h *UserHandler) GetUser(c *gin.Context) {
-	userID, exists := c.Get("user_id")
+	claimsValue, exists := c.Get("claims")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, dto.ErrorResponse{Error: "Unauthorized"})
 		return
 	}
 
-	id, ok := userID.(int)
+	claims, ok := claimsValue.(*utils.Claims)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: "Invalid user ID type"})
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: "Invalid claims format"})
 		return
 	}
 
-	user, err := h.UserService.GetUserByID(id)
+	user, err := h.UserService.GetUserByIDWithClaims(claims)
 	if err != nil {
 		c.JSON(http.StatusNotFound, dto.ErrorResponse{Error: "User not found"})
 		return

@@ -5,6 +5,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"jumyste-app-backend/config"
 	"jumyste-app-backend/pkg/logger"
+	"jumyste-app-backend/utils"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -47,13 +48,14 @@ func (m *AuthMiddleware) VerifyTokenMiddleware() gin.HandlerFunc {
 		c.Set("user_id", claims.UserID)
 		c.Set("role_id", claims.RoleID)
 		c.Set("company_id", claims.CompanyID)
-		c.Set("dep_id", claims.DepID)
+		c.Set("dep_id", claims.DepartmentID)
+		c.Set("claims", claims)
 		c.Next()
 	}
 }
 
-func (m *AuthMiddleware) validateToken(tokenString string) (*CustomClaims, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
+func (m *AuthMiddleware) validateToken(tokenString string) (*utils.Claims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &utils.Claims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(m.secretKey), nil
 	})
 
@@ -64,45 +66,18 @@ func (m *AuthMiddleware) validateToken(tokenString string) (*CustomClaims, error
 		return nil, ErrInvalidToken
 	}
 
-	claims, ok := token.Claims.(*CustomClaims)
+	claims, ok := token.Claims.(*utils.Claims)
 	if !ok || !token.Valid {
 		return nil, ErrInvalidToken
 	}
 
-	if claims.ExpiresAt.Before(time.Now()) {
-		return nil, ErrExpiredToken
-	}
-
-	return claims, nil
-}
-func (m *AuthMiddleware) VerifyTokenWithClaims(tokenString string) (*CustomClaims, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
-		return []byte(m.secretKey), nil
-	})
-
-	if err != nil {
-		if errors.Is(err, jwt.ErrTokenExpired) {
-			return nil, ErrExpiredToken
-		}
-		return nil, ErrInvalidToken
-	}
-
-	claims, ok := token.Claims.(*CustomClaims)
-	if !ok || !token.Valid {
-		return nil, ErrInvalidToken
-	}
-
-	if claims.ExpiresAt.Before(time.Now()) {
+	if claims.ExpiresAt.Time.Before(time.Now()) {
 		return nil, ErrExpiredToken
 	}
 
 	return claims, nil
 }
 
-type CustomClaims struct {
-	UserID    int `json:"user_id"`
-	RoleID    int `json:"role_id"`
-	CompanyID int `json:"company_id,omitempty"`
-	DepID     int `json:"dep_id,omitempty"`
-	jwt.RegisteredClaims
+func (m *AuthMiddleware) VerifyTokenWithClaims(tokenString string) (*utils.Claims, error) {
+	return m.validateToken(tokenString)
 }
