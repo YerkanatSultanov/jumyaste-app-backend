@@ -9,6 +9,13 @@ definitions:
       email:
         type: string
     type: object
+  jumyste-app-backend_internal_dto.CreateDepartmentRequest:
+    properties:
+      name:
+        type: string
+    required:
+    - name
+    type: object
   jumyste-app-backend_internal_dto.CreateVacancyRequest:
     properties:
       category:
@@ -872,9 +879,75 @@ paths:
       summary: Get chats by user ID
       tags:
       - Chats
+  /departments:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new department within the authenticated user's company
+      parameters:
+      - description: Department data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/jumyste-app-backend_internal_dto.CreateDepartmentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Created department
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_entity.Department'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "500":
+          description: Failed to create department
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new department
+      tags:
+      - Departments
+  /departments/{id}:
+    get:
+      description: Get details of a specific department
+      parameters:
+      - description: Department ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_entity.Department'
+        "404":
+          description: Department not found
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get a department by ID
+      tags:
+      - Departments
   /departments/all:
     get:
-      description: Retrieves a list of all vacancies
+      description: Retrieves a list of all departments for the authenticated user's
+        company
       produces:
       - application/json
       responses:
@@ -884,6 +957,10 @@ paths:
             items:
               $ref: '#/definitions/jumyste-app-backend_internal_entity.Department'
             type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
         "500":
           description: Failed to fetch departments
           schema:

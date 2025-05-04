@@ -118,6 +118,8 @@ func SetupRouter(
 	departments.Use(authMiddleware.VerifyTokenMiddleware())
 	{
 		departments.GET("/all", departmentHandler.GetMyDepartments)
+		departments.POST("/", departmentHandler.CreateDepartment)
+		departments.GET("/:id", departmentHandler.GetDepartmentByID)
 	}
 
 	// --- WebSocket ---

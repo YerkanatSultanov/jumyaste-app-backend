@@ -505,6 +505,63 @@ const docTemplate = `{
                 }
             }
         },
+        "/departments": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a new department within the authenticated user's company",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Departments"
+                ],
+                "summary": "Create a new department",
+                "parameters": [
+                    {
+                        "description": "Department data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.CreateDepartmentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Created department",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_entity.Department"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to create department",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/departments/all": {
             "get": {
                 "security": [
@@ -512,7 +569,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Retrieves a list of all vacancies",
+                "description": "Retrieves a list of all departments for the authenticated user's company",
                 "produces": [
                     "application/json"
                 ],
@@ -530,8 +587,60 @@ const docTemplate = `{
                             }
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Failed to fetch departments",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/departments/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get details of a specific department",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Departments"
+                ],
+                "summary": "Get a department by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Department ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_entity.Department"
+                        }
+                    },
+                    "404": {
+                        "description": "Department not found",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
                         }
@@ -2078,6 +2187,17 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "email": {
+                    "type": "string"
+                }
+            }
+        },
+        "jumyste-app-backend_internal_dto.CreateDepartmentRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
                     "type": "string"
                 }
             }
