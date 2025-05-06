@@ -22,4 +22,5 @@ type UserResponse struct {
 	ProfilePicture string    `json:"profile_picture,omitempty"`
 	Company        *Company  `json:"company"`
 	CreatedAt      time.Time `json:"created_at"`
+	IsOwner        bool      `json:"is_owner"`
 }

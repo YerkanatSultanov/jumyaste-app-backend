@@ -1646,7 +1646,7 @@ paths:
       summary: Update user information
       tags:
       - Users
-  /vacancies:
+  /users/vacancy:
     get:
       description: Retrieves a list of all vacancies
       produces:
@@ -1666,7 +1666,96 @@ paths:
       - BearerAuth: []
       summary: Get all vacancies
       tags:
-      - Vacancies
+      - All can use
+  /users/vacancy/{id}:
+    get:
+      description: Retrieve a specific vacancy by its ID
+      parameters:
+      - description: Vacancy ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_entity.Vacancy'
+        "400":
+          description: Invalid vacancy ID
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "404":
+          description: Vacancy not found
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get vacancy by ID
+      tags:
+      - All can use
+  /users/vacancy/search:
+    get:
+      consumes:
+      - application/json
+      description: Allows searching for vacancies based on various filters, including
+        an optional status filter.
+      parameters:
+      - description: Search query
+        in: query
+        name: query
+        type: string
+      - collectionFormat: multi
+        description: Employment type filter
+        in: query
+        items:
+          type: string
+        name: employment_type
+        type: array
+      - collectionFormat: multi
+        description: Work format filter
+        in: query
+        items:
+          type: string
+        name: work_format
+        type: array
+      - collectionFormat: multi
+        description: Skills filter
+        in: query
+        items:
+          type: string
+        name: skills
+        type: array
+      - default: all
+        description: Filter vacancies by status (open, closed, or 'all' for all vacancies)
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of matching vacancies
+          schema:
+            items:
+              $ref: '#/definitions/jumyste-app-backend_internal_entity.Vacancy'
+            type: array
+        "400":
+          description: Invalid search parameters
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "500":
+          description: Failed to search vacancies
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Search for vacancies
+      tags:
+      - All can use
+  /vacancies:
     post:
       consumes:
       - application/json
@@ -1908,65 +1997,6 @@ paths:
       summary: Get vacancies created by the authenticated HR
       tags:
       - Vacancies
-  /vacancies/search:
-    get:
-      consumes:
-      - application/json
-      description: Allows searching for vacancies based on various filters, including
-        an optional status filter.
-      parameters:
-      - description: Search query
-        in: query
-        name: query
-        type: string
-      - collectionFormat: multi
-        description: Employment type filter
-        in: query
-        items:
-          type: string
-        name: employment_type
-        type: array
-      - collectionFormat: multi
-        description: Work format filter
-        in: query
-        items:
-          type: string
-        name: work_format
-        type: array
-      - collectionFormat: multi
-        description: Skills filter
-        in: query
-        items:
-          type: string
-        name: skills
-        type: array
-      - default: all
-        description: Filter vacancies by status (open, closed, or 'all' for all vacancies)
-        in: query
-        name: status
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: List of matching vacancies
-          schema:
-            items:
-              $ref: '#/definitions/jumyste-app-backend_internal_entity.Vacancy'
-            type: array
-        "400":
-          description: Invalid search parameters
-          schema:
-            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
-        "500":
-          description: Failed to search vacancies
-          schema:
-            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Search for vacancies
-      tags:
-      - Vacancies
   /vacancies/status/{id}:
     put:
       consumes:
@@ -2004,35 +2034,40 @@ paths:
       summary: Update vacancy status
       tags:
       - Vacancies
-  /vacancies/user/{id}:
+  /ws:
     get:
-      description: Retrieve a specific vacancy by its ID
+      description: Устанавливает WebSocket-соединение с авторизованным пользователем
+        и chat_id в query
       parameters:
-      - description: Vacancy ID
-        in: path
-        name: id
+      - description: ID чата
+        in: query
+        name: chat_id
         required: true
         type: integer
       produces:
-      - application/json
+      - text/plain
       responses:
-        "200":
-          description: OK
+        "101":
+          description: Switching Protocols – WebSocket connection established
           schema:
-            $ref: '#/definitions/jumyste-app-backend_internal_entity.Vacancy'
+            type: string
         "400":
-          description: Invalid vacancy ID
+          description: Invalid chat ID
           schema:
             $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
-        "404":
-          description: Vacancy not found
+        "401":
+          description: Unauthorized – отсутствует или неверный токен
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "500":
+          description: Ошибка при апгрейде соединения
           schema:
             $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Get vacancy by ID
+      summary: WebSocket соединение с чатом
       tags:
-      - Vacancies
+      - WebSocket
 securityDefinitions:
   BearerAuth:
     description: Type "Bearer" followed by a space and your JWT token.

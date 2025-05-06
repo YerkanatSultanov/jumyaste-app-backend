@@ -43,6 +43,9 @@ func SetupRouter(
 	{
 		protected.GET("/me", userHandler.GetUser)
 		protected.PATCH("/me", userHandler.UpdateUser)
+		protected.GET("/vacancy", vacancyHandler.GetAllVacancies)
+		protected.GET("/vacancy/search", vacancyHandler.SearchVacancies)
+		protected.GET("/vacancy/:id", vacancyHandler.GetVacancyByIDForUser)
 		// users.DELETE("/me", userHandler.DeleteUser)
 	}
 
@@ -55,10 +58,10 @@ func SetupRouter(
 		vacancyRoutes.POST("/", vacancyHandler.CreateVacancy)
 		vacancyRoutes.PUT("/:id", vacancyHandler.UpdateVacancy)
 		vacancyRoutes.DELETE("/:id", vacancyHandler.DeleteVacancy)
-		vacancyRoutes.GET("/", vacancyHandler.GetAllVacancies)
+		//vacancyRoutes.GET("/", vacancyHandler.GetAllVacancies)
 		vacancyRoutes.GET("/my", vacancyHandler.GetMyVacancies)
-		vacancyRoutes.GET("/search", vacancyHandler.SearchVacancies)
-		vacancyRoutes.GET("/user/:id", vacancyHandler.GetVacancyByIDForUser)
+		//vacancyRoutes.GET("/search", vacancyHandler.SearchVacancies)
+		//vacancyRoutes.GET("/user/:id", vacancyHandler.GetVacancyByIDForUser)
 		vacancyRoutes.GET("/hr/:id", vacancyHandler.GetVacancyByIDForHr)
 		vacancyRoutes.GET("/feed/data", vacancyHandler.GetFeedData)
 		vacancyRoutes.PUT("/status/:id", vacancyHandler.UpdateVacancyStatusHandler)

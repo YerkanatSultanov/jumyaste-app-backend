@@ -3,6 +3,7 @@ package handler
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	_ "jumyste-app-backend/internal/dto"
 	"jumyste-app-backend/internal/manager"
 	"jumyste-app-backend/internal/middleware"
 	"jumyste-app-backend/pkg/logger"
@@ -30,6 +31,19 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
+// HandleWebSocket godoc
+//
+// @Summary WebSocket соединение с чатом
+// @Description Устанавливает WebSocket-соединение с авторизованным пользователем и chat_id в query
+// @Tags WebSocket
+// @Produce plain
+// @Security BearerAuth
+// @Param chat_id query int true "ID чата"
+// @Success 101 {string} string "Switching Protocols – WebSocket connection established"
+// @Failure 400 {object} dto.ErrorResponse "Invalid chat ID"
+// @Failure 401 {object} dto.ErrorResponse "Unauthorized – отсутствует или неверный токен"
+// @Failure 500 {object} dto.ErrorResponse "Ошибка при апгрейде соединения"
+// @Router /ws [get]
 func (h *WebSocketHandler) HandleWebSocket(c *gin.Context) {
 	authHeader := c.GetHeader("Authorization")
 	if authHeader == "" {

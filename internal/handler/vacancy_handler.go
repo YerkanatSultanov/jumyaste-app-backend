@@ -163,12 +163,12 @@ func (h *VacancyHandler) DeleteVacancy(c *gin.Context) {
 //
 // @Summary Get all vacancies
 // @Description Retrieves a list of all vacancies
-// @Tags Vacancies
+// @Tags All can use
 // @Produce json
 // @Security BearerAuth
 // @Success 200 {array} entity.Vacancy "List of vacancies"
 // @Failure 500 {object} dto.ErrorResponse "Failed to fetch vacancies"
-// @Router /vacancies [get]
+// @Router /users/vacancy [get]
 func (h *VacancyHandler) GetAllVacancies(c *gin.Context) {
 	vacancies, err := h.VacancyService.GetAllVacancies()
 	if err != nil {
@@ -212,7 +212,7 @@ func (h *VacancyHandler) GetMyVacancies(c *gin.Context) {
 //
 //	If 'status' is set to 'all', it will return vacancies regardless of their status (open or closed).
 //
-// @Tags Vacancies
+// @Tags All can use
 // @Accept json
 // @Produce json
 // @Security BearerAuth
@@ -224,7 +224,7 @@ func (h *VacancyHandler) GetMyVacancies(c *gin.Context) {
 // @Success 200 {array} entity.Vacancy "List of matching vacancies"
 // @Failure 400 {object} dto.ErrorResponse "Invalid search parameters"
 // @Failure 500 {object} dto.ErrorResponse "Failed to search vacancies"
-// @Router /vacancies/search [get]
+// @Router /users/vacancy/search [get]
 func (h *VacancyHandler) SearchVacancies(c *gin.Context) {
 	var filter entity.VacancyFilter
 
@@ -296,13 +296,13 @@ func (h *VacancyHandler) GetVacancyByCompanyID(c *gin.Context) {
 // @Summary      Get vacancy by ID
 // @Description  Retrieve a specific vacancy by its ID
 // @Security     BearerAuth
-// @Tags         Vacancies
+// @Tags         All can use
 // @Produce      json
 // @Param        id   path      int  true  "Vacancy ID"
 // @Success      200  {object}  entity.Vacancy
 // @Failure      400  {object}  dto.ErrorResponse  "Invalid vacancy ID"
 // @Failure      404  {object}  dto.ErrorResponse  "Vacancy not found"
-// @Router       /vacancies/user/{id} [get]
+// @Router       /users/vacancy/{id} [get]
 func (h *VacancyHandler) GetVacancyByIDForUser(c *gin.Context) {
 	vacancyID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {

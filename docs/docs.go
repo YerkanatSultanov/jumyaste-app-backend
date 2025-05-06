@@ -1663,7 +1663,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/vacancies": {
+        "/users/vacancy": {
             "get": {
                 "security": [
                     {
@@ -1675,7 +1675,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Vacancies"
+                    "All can use"
                 ],
                 "summary": "Get all vacancies",
                 "responses": {
@@ -1695,7 +1695,143 @@ const docTemplate = `{
                         }
                     }
                 }
-            },
+            }
+        },
+        "/users/vacancy/search": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Allows searching for vacancies based on various filters, including an optional status filter.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "All can use"
+                ],
+                "summary": "Search for vacancies",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "query",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "multi",
+                        "description": "Employment type filter",
+                        "name": "employment_type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "multi",
+                        "description": "Work format filter",
+                        "name": "work_format",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "multi",
+                        "description": "Skills filter",
+                        "name": "skills",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "all",
+                        "description": "Filter vacancies by status (open, closed, or 'all' for all vacancies)",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of matching vacancies",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/jumyste-app-backend_internal_entity.Vacancy"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid search parameters",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to search vacancies",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/vacancy/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve a specific vacancy by its ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "All can use"
+                ],
+                "summary": "Get vacancy by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Vacancy ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_entity.Vacancy"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid vacancy ID",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Vacancy not found",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/vacancies": {
             "post": {
                 "security": [
                     {
@@ -1948,94 +2084,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/vacancies/search": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Allows searching for vacancies based on various filters, including an optional status filter.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Vacancies"
-                ],
-                "summary": "Search for vacancies",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Search query",
-                        "name": "query",
-                        "in": "query"
-                    },
-                    {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        },
-                        "collectionFormat": "multi",
-                        "description": "Employment type filter",
-                        "name": "employment_type",
-                        "in": "query"
-                    },
-                    {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        },
-                        "collectionFormat": "multi",
-                        "description": "Work format filter",
-                        "name": "work_format",
-                        "in": "query"
-                    },
-                    {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        },
-                        "collectionFormat": "multi",
-                        "description": "Skills filter",
-                        "name": "skills",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "default": "all",
-                        "description": "Filter vacancies by status (open, closed, or 'all' for all vacancies)",
-                        "name": "status",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "List of matching vacancies",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/jumyste-app-backend_internal_entity.Vacancy"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid search parameters",
-                        "schema": {
-                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Failed to search vacancies",
-                        "schema": {
-                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/vacancies/status/{id}": {
             "put": {
                 "security": [
@@ -2087,52 +2135,6 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/vacancies/user/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Retrieve a specific vacancy by its ID",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Vacancies"
-                ],
-                "summary": "Get vacancy by ID",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Vacancy ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/jumyste-app-backend_internal_entity.Vacancy"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid vacancy ID",
-                        "schema": {
-                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Vacancy not found",
                         "schema": {
                             "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
                         }
@@ -2262,6 +2264,58 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Failed to delete vacancy",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/ws": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Устанавливает WebSocket-соединение с авторизованным пользователем и chat_id в query",
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "WebSocket"
+                ],
+                "summary": "WebSocket соединение с чатом",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID чата",
+                        "name": "chat_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "101": {
+                        "description": "Switching Protocols – WebSocket connection established",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid chat ID",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized – отсутствует или неверный токен",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка при апгрейде соединения",
                         "schema": {
                             "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
                         }
