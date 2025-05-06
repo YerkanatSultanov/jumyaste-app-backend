@@ -19,6 +19,7 @@ func SetupRouter(
 	invitationHandler *handler.InvitationHandler,
 	jobApplicationHandler *handler.JobApplicationHandler,
 	departmentHandler *handler.DepartmentsHandler,
+	companyHandler *handler.CompanyHandler,
 ) *gin.Engine {
 	r := gin.Default()
 	r.Use(middleware.CORSMiddleware())
@@ -124,6 +125,16 @@ func SetupRouter(
 		departments.GET("/all", departmentHandler.GetMyDepartments)
 		departments.POST("/", departmentHandler.CreateDepartment)
 		departments.GET("/:id", departmentHandler.GetDepartmentByID)
+	}
+
+	// --- Company --
+	companyGroup := r.Group("/api/companies")
+	companyGroup.Use(authMiddleware.VerifyTokenMiddleware())
+	{
+		companyGroup.POST("", companyHandler.CreateCompany)
+		companyGroup.GET("/:id", companyHandler.GetCompanyByID)
+		companyGroup.PUT("/:id", companyHandler.UpdateCompany)
+		companyGroup.DELETE("/:id", companyHandler.DeleteCompany)
 	}
 
 	// --- WebSocket ---

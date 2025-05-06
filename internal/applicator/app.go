@@ -19,6 +19,7 @@ type App struct {
 	VacancyRepo       *repository.VacancyRepository
 	JobAppRepo        *repository.JobApplicationRepository
 	DepartmentRepo    *repository.DepartmentsRepo
+	CompanyRepo       *repository.CompanyRepository
 	AuthService       *service.AuthService
 	UserService       *service.UserService
 	VacancyService    *service.VacancyService
@@ -26,6 +27,7 @@ type App struct {
 	InvitationService *service.InvitationService
 	JobAppService     *service.JobApplicationService
 	DepartmentService *service.DepartmentsService
+	CompanyService    *service.CompanyService
 	AuthHandler       *handler.AuthHandler
 	UserHandler       *handler.UserHandler
 	VacancyHandler    *handler.VacancyHandler
@@ -36,6 +38,7 @@ type App struct {
 	ChatHandler       *handler.ChatHandler
 	MessageHandler    *handler.MessageHandler
 	DepartmentHandler *handler.DepartmentsHandler
+	CompanyHandler    *handler.CompanyHandler
 	WSManager         *manager.WebSocketManager
 	WSHandler         *handler.WebSocketHandler
 	RedisClient       *redis.Client
@@ -76,6 +79,7 @@ func NewApp(authMiddleware *middleware.AuthMiddleware) *App {
 	resumeService := service.NewResumeService(aiClient, resumeRepo)
 	jobAppService := service.NewJobApplicationService(jobAppRepo, resumeRepo, vacancyRepo, aiClient)
 	departmentService := service.NewDepartmentsService(departmentRepo)
+	companyService := service.NewCompanyService(companyRepo)
 
 	logger.Log.Info("Initializing WebSocket manager...")
 	wsManager := manager.NewWebSocketManager()
@@ -92,6 +96,7 @@ func NewApp(authMiddleware *middleware.AuthMiddleware) *App {
 	wsHandler := handler.NewWebSocketHandler(wsManager, authMiddleware)
 	jobAppHandler := handler.NewJobApplicationHandler(jobAppService, resumeService)
 	departmentHandler := handler.NewDepartmentsHandler(departmentService)
+	companyHandler := handler.NewCompanyHandler(companyService)
 
 	logger.Log.Info("Application initialized successfully")
 
@@ -117,6 +122,7 @@ func NewApp(authMiddleware *middleware.AuthMiddleware) *App {
 		ResumeHandler:     resumeHandler,
 		JobAppHandler:     jobAppHandler,
 		DepartmentHandler: departmentHandler,
+		CompanyHandler:    companyHandler,
 		AIClient:          aiClient,
 		WSManager:         wsManager,
 		WSHandler:         wsHandler,

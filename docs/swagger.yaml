@@ -394,6 +394,8 @@ definitions:
     properties:
       created_at:
         type: string
+      description:
+        type: string
       id:
         type: integer
       name:
@@ -543,6 +545,8 @@ definitions:
         type: string
       id:
         type: integer
+      is_owner:
+        type: boolean
       last_name:
         type: string
       profile_picture:
@@ -904,6 +908,131 @@ paths:
       summary: Get chats by user ID
       tags:
       - Chats
+  /companies:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Company payload
+        in: body
+        name: company
+        required: true
+        schema:
+          $ref: '#/definitions/jumyste-app-backend_internal_entity.Company'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_entity.Company'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new company
+      tags:
+      - Companies
+  /companies/{id}:
+    delete:
+      parameters:
+      - description: Company ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a company
+      tags:
+      - Companies
+    get:
+      parameters:
+      - description: Company ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_entity.Company'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get company by ID
+      tags:
+      - Companies
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Company ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Updated company
+        in: body
+        name: company
+        required: true
+        schema:
+          $ref: '#/definitions/jumyste-app-backend_internal_entity.Company'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update a company
+      tags:
+      - Companies
   /departments:
     post:
       consumes:
