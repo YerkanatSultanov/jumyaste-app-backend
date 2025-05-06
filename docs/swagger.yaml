@@ -158,12 +158,6 @@ definitions:
     type: object
   jumyste-app-backend_internal_dto.RegisterHRRequest:
     properties:
-      company_id:
-        example: 1
-        type: integer
-      dep_id:
-        example: 1
-        type: integer
       email:
         example: user@example.com
         type: string
@@ -178,8 +172,6 @@ definitions:
         minLength: 6
         type: string
     required:
-    - company_id
-    - dep_id
     - email
     - first_name
     - last_name

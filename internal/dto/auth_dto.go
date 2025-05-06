@@ -13,8 +13,6 @@ type RegisterHRRequest struct {
 	Password  string `json:"password" binding:"required,min=6" example:"securepassword"`
 	FirstName string `json:"first_name" binding:"required" example:"John"`
 	LastName  string `json:"last_name" binding:"required" example:"Doe"`
-	DepID     int    `json:"dep_id" binding:"required" example:"1"`
-	CompanyID int    `json:"company_id" binding:"required" example:"1"`
 }
 
 type LoginRequest struct {

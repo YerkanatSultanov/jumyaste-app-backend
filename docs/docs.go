@@ -2758,22 +2758,12 @@ const docTemplate = `{
         "jumyste-app-backend_internal_dto.RegisterHRRequest": {
             "type": "object",
             "required": [
-                "company_id",
-                "dep_id",
                 "email",
                 "first_name",
                 "last_name",
                 "password"
             ],
             "properties": {
-                "company_id": {
-                    "type": "integer",
-                    "example": 1
-                },
-                "dep_id": {
-                    "type": "integer",
-                    "example": 1
-                },
                 "email": {
                     "type": "string",
                     "example": "user@example.com"

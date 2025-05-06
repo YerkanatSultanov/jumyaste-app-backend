@@ -35,7 +35,7 @@ func (s *InvitationService) SendInvitation(email string, companyID, depID int) e
 	}
 
 	subject := "Company Invitation"
-	body := fmt.Sprintf("You have been invited to a company. Register at: https://jumyste.kz/register")
+	body := fmt.Sprintf("You have been invited to a company. Register at: https://jumyste.click")
 
 	err = mail.SendEmail(email, subject, body)
 	if err != nil {

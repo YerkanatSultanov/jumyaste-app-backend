@@ -183,8 +183,6 @@ func (h *AuthHandler) RegisterHR(c *gin.Context) {
 		Password:  request.Password,
 		FirstName: request.FirstName,
 		LastName:  request.LastName,
-		DepID:     request.DepID,
-		CompanyID: request.CompanyID,
 	}
 
 	if err := h.AuthService.RegisterHR(hrRegistration); err != nil {
