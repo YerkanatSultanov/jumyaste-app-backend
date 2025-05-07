@@ -201,12 +201,24 @@ func (s *JobApplicationService) GetJobAppAnalytics(ctx context.Context, hrID int
 func (s *JobApplicationService) GetJobApplicationByID(ctx context.Context, applicationID int) (*dto.JobApplicationWithResumeResponse, error) {
 	app, err := s.JobApplicationRepo.GetJobApplicationByID(ctx, applicationID)
 	if err != nil {
+		logger.Log.Error("Failed to get job application", "error", err)
 		return nil, err
 	}
 
-	resume, user, err := s.ResumeRepo.GetResumeByUserID(ctx, app.ResumeID)
+	resume, user, err := s.ResumeRepo.GetResumeByUserID(ctx, app.UserID)
 	if err != nil {
+		logger.Log.Error("Failed to get resume and user", "error", err)
 		return nil, err
+	}
+
+	if user == nil {
+		logger.Log.Error("User is nil for resume", "resume_id", app.ResumeID)
+		return nil, fmt.Errorf("user not found for resume id %d", app.ResumeID)
+	}
+
+	if resume == nil {
+		logger.Log.Error("Resume is nil", "resume_id", app.ResumeID)
+		return nil, fmt.Errorf("resume not found with id %d", app.ResumeID)
 	}
 
 	response := &dto.JobApplicationWithResumeResponse{
