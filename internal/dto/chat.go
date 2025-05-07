@@ -7,3 +7,7 @@ type ChatResponse struct {
 	CreatedAt string `json:"created_at"`
 	UpdatedAt string `json:"updated_at"`
 }
+
+type CreateChatRequest struct {
+	SecondUserId int `json:"second_user_id" binding:"required"`
+}

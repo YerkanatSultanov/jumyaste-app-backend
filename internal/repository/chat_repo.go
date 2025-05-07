@@ -83,6 +83,25 @@ func (r *ChatRepository) GetChatByID(chatID uint) (*entity.Chat, error) {
 }
 
 // GetAllChats - Retrieves all chats
+//func (r *ChatRepository) GetAllChats() ([]entity.Chat, error) {
+//	query := "SELECT id, created_at, updated_at FROM chats"
+//	rows, err := r.DB.Query(query)
+//	if err != nil {
+//		return nil, err
+//	}
+//	defer rows.Close()
+//
+//	var chats []entity.Chat
+//	for rows.Next() {
+//		var chat entity.Chat
+//		if err := rows.Scan(&chat.ID, &chat.CreatedAt, &chat.UpdatedAt); err != nil {
+//			return nil, err
+//		}
+//		chats = append(chats, chat)
+//	}
+//	return chats, nil
+//}
+
 func (r *ChatRepository) GetAllChats() ([]entity.Chat, error) {
 	query := "SELECT id, created_at, updated_at FROM chats"
 	rows, err := r.DB.Query(query)
@@ -97,6 +116,13 @@ func (r *ChatRepository) GetAllChats() ([]entity.Chat, error) {
 		if err := rows.Scan(&chat.ID, &chat.CreatedAt, &chat.UpdatedAt); err != nil {
 			return nil, err
 		}
+
+		users, err := r.GetUsersByChatID(chat.ID, -1)
+		if err != nil {
+			return nil, err
+		}
+		chat.Users = users
+
 		chats = append(chats, chat)
 	}
 	return chats, nil

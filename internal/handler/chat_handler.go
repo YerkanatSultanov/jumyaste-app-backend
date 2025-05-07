@@ -23,7 +23,7 @@ func NewChatHandler(chatService *service.ChatService) *ChatHandler {
 // @Tags Chats
 // @Accept json
 // @Produce json
-// @Param second_user_id body int true "Second User ID"
+// @Param request body dto.CreateChatRequest true "Chat creation payload"
 // @Security BearerAuth
 // @Success 201 {object} entity.Chat "Chat created successfully"
 // @Failure 400 {object} dto.ErrorResponse "Invalid request"
@@ -31,9 +31,7 @@ func NewChatHandler(chatService *service.ChatService) *ChatHandler {
 // @Failure 500 {object} dto.ErrorResponse "Failed to create chat"
 // @Router /chats [post]
 func (h *ChatHandler) CreateChatHandler(c *gin.Context) {
-	var req struct {
-		SecondUserId int `json:"second_user_id"`
-	}
+	var req dto.CreateChatRequest
 
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -52,7 +50,7 @@ func (h *ChatHandler) CreateChatHandler(c *gin.Context) {
 		return
 	}
 
-	chat, err := h.ChatService.CreateChat(req.SecondUserId, id)
+	chat, err := h.ChatService.CreateChat(id, req.SecondUserId)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

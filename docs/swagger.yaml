@@ -9,6 +9,13 @@ definitions:
       email:
         type: string
     type: object
+  jumyste-app-backend_internal_dto.CreateChatRequest:
+    properties:
+      second_user_id:
+        type: integer
+    required:
+    - second_user_id
+    type: object
   jumyste-app-backend_internal_dto.CreateDepartmentRequest:
     properties:
       color:
@@ -804,12 +811,12 @@ paths:
       - application/json
       description: Create a new chat by providing the second user's ID
       parameters:
-      - description: Second User ID
+      - description: Chat creation payload
         in: body
-        name: second_user_id
+        name: request
         required: true
         schema:
-          type: integer
+          $ref: '#/definitions/jumyste-app-backend_internal_dto.CreateChatRequest'
       produces:
       - application/json
       responses:

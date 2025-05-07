@@ -364,12 +364,12 @@ const docTemplate = `{
                 "summary": "Create a chat between two users",
                 "parameters": [
                     {
-                        "description": "Second User ID",
-                        "name": "second_user_id",
+                        "description": "Chat creation payload",
+                        "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.CreateChatRequest"
                         }
                     }
                 ],
@@ -2536,6 +2536,17 @@ const docTemplate = `{
                 },
                 "email": {
                     "type": "string"
+                }
+            }
+        },
+        "jumyste-app-backend_internal_dto.CreateChatRequest": {
+            "type": "object",
+            "required": [
+                "second_user_id"
+            ],
+            "properties": {
+                "second_user_id": {
+                    "type": "integer"
                 }
             }
         },
