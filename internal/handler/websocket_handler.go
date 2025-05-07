@@ -9,7 +9,6 @@ import (
 	"jumyste-app-backend/pkg/logger"
 	"net/http"
 	"strconv"
-	"strings"
 )
 
 type WebSocketHandler struct {
@@ -45,18 +44,11 @@ var upgrader = websocket.Upgrader{
 // @Failure 500 {object} dto.ErrorResponse "Ошибка при апгрейде соединения"
 // @Router /ws [get]
 func (h *WebSocketHandler) HandleWebSocket(c *gin.Context) {
-	authHeader := c.GetHeader("Authorization")
-	if authHeader == "" {
+	tokenString := c.Query("access_token")
+	if tokenString == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Missing token"})
 		return
 	}
-
-	if !strings.HasPrefix(authHeader, "Bearer ") {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token format"})
-		return
-	}
-
-	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 
 	claims, err := h.AuthMiddleware.VerifyTokenWithClaims(tokenString)
 	if err != nil {
