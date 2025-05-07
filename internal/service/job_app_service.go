@@ -111,7 +111,7 @@ func (s *JobApplicationService) GetJobApplicationsByVacancyID(ctx context.Contex
 
 	var response []dto.JobApplicationWithResumeResponse
 	for _, app := range applications {
-		resume, user, err := s.ResumeRepo.GetResumeByUserID(ctx, app.ResumeID)
+		resume, user, err := s.ResumeRepo.GetResumeByUserID(ctx, app.UserID)
 		if err != nil {
 			logger.Log.Error("Failed to get resume for application", "error", err)
 			return nil, err
