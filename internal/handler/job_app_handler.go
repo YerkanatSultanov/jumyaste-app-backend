@@ -41,16 +41,30 @@ func (h *JobApplicationHandler) ApplyForJob(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid vacancy ID"})
 		return
 	}
+
 	resume, user, err := h.ResumeService.GetResumeAndUserByUserID(c.Request.Context(), userID)
 	if err != nil {
-		logger.Log.Error("Failed to retrieve user information and resume", "error", err)
+		logger.Log.Error("Failed to retrieve user information and resume", "user_id", userID, "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve user information and resume"})
 		return
 	}
+	if resume == nil {
+		logger.Log.Error("Resume not found", "user_id", userID)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Resume not found"})
+		return
+	}
 
-	application, err := h.JobApplicationService.ApplyForJob(c.Request.Context(), userID, vacancyID, user.FirstName, user.LastName, user.Email, resume.ID)
+	application, err := h.JobApplicationService.ApplyForJob(
+		c.Request.Context(),
+		userID,
+		vacancyID,
+		user.FirstName,
+		user.LastName,
+		user.Email,
+		resume.ID,
+	)
 	if err != nil {
-		logger.Log.Error("Failed to apply for job", "error", err)
+		logger.Log.Error("Failed to apply for job", "user_id", userID, "vacancy_id", vacancyID, "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

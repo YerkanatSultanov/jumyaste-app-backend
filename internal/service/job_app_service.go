@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"jumyste-app-backend/internal/ai"
 	"jumyste-app-backend/internal/dto"
@@ -34,17 +35,26 @@ func (s *JobApplicationService) ApplyForJob(
 	firstName, lastName, email string,
 	resumeID int,
 ) (*entity.JobApplication, error) {
-	resume, err := s.ResumeRepo.GetByID(ctx, userID)
+	resume, err := s.ResumeRepo.GetByUserID(ctx, userID)
 	if err != nil {
-		logger.Log.Error("Failed to get resume", "error", err)
+		logger.Log.Error("Failed to get resume", "user_id", userID, "error", err)
 		return nil, err
+	}
+	if resume == nil {
+		logger.Log.Error("Resume not found for user", "user_id", userID)
+		return nil, errors.New("resume not found")
 	}
 
 	vacancy, err := s.VacancyRepo.GetVacancyById(vacancyID)
 	if err != nil {
-		logger.Log.Error("Failed to get vacancy", "error", err)
+		logger.Log.Error("Failed to get vacancy", "vacancy_id", vacancyID, "error", err)
 		return nil, err
 	}
+	if vacancy == nil {
+		logger.Log.Error("Vacancy not found", "vacancy_id", vacancyID)
+		return nil, errors.New("vacancy not found")
+	}
+
 	resumeText := fmt.Sprintf("Имя: %s\nДолжность: %s\nНавыки: %s\nГород: %s\nО себе: %s",
 		resume.FullName,
 		resume.DesiredPosition,
