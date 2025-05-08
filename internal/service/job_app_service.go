@@ -191,7 +191,7 @@ func (s *JobApplicationService) GetJobAppAnalytics(ctx context.Context, hrID int
 	}
 
 	for i := range stats {
-		stats[i].Percentage = float64(stats[i].Count) / float64(totalCount) * 100
+		stats[i].Percentage = int(float64(stats[i].Count) / float64(totalCount) * 100)
 	}
 
 	logger.Log.Info("Successfully fetched job application analytics", "hr_id", hrID, "total_count", totalCount)

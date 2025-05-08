@@ -24,7 +24,7 @@ type JobApplicationWithResume struct {
 }
 
 type ApplicationStatusStat struct {
-	Status     string  `json:"status"`
-	Count      int     `json:"count"`
-	Percentage float64 `json:"percentage"`
+	Status     string `json:"status"`
+	Count      int    `json:"count"`
+	Percentage int    `json:"percentage"`
 }
