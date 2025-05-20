@@ -79,6 +79,24 @@ definitions:
       new_vacancies_count:
         type: integer
     type: object
+  jumyste-app-backend_internal_dto.GenerateResumeRequest:
+    properties:
+      position:
+        type: string
+    required:
+    - position
+    type: object
+  jumyste-app-backend_internal_dto.GeneratedResumeResponse:
+    properties:
+      about:
+        type: string
+      skills:
+        items:
+          type: string
+        type: array
+      work_experience:
+        $ref: '#/definitions/jumyste-app-backend_internal_dto.WorkExperienceResponse'
+    type: object
   jumyste-app-backend_internal_dto.JobAppStatusAnalytics:
     properties:
       count:
@@ -401,8 +419,6 @@ definitions:
     type: object
   jumyste-app-backend_internal_dto.WorkExperienceResponse:
     properties:
-      city:
-        type: string
       company_name:
         type: string
       description:
@@ -410,6 +426,8 @@ definitions:
       employment_type:
         type: string
       end_date:
+        type: string
+      location:
         type: string
       position:
         type: string
@@ -1654,6 +1672,43 @@ paths:
       security:
       - BearerAuth: []
       summary: Get a resume by user ID
+      tags:
+      - Resume
+  /resume/ai-generate:
+    post:
+      consumes:
+      - application/json
+      description: Generate a draft resume using AI, providing position and city as
+        input
+      parameters:
+      - description: Position for resume draft
+        in: body
+        name: resume_request
+        required: true
+        schema:
+          $ref: '#/definitions/jumyste-app-backend_internal_dto.GenerateResumeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Generated resume draft
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.GeneratedResumeResponse'
+        "400":
+          description: Invalid input data
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+        "500":
+          description: Failed to generate resume draft
+          schema:
+            $ref: '#/definitions/jumyste-app-backend_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Generate a draft resume based on position and city
       tags:
       - Resume
   /resume/candidates:

@@ -1512,6 +1512,63 @@ const docTemplate = `{
                 }
             }
         },
+        "/resume/ai-generate": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Generate a draft resume using AI, providing position and city as input",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Resume"
+                ],
+                "summary": "Generate a draft resume based on position and city",
+                "parameters": [
+                    {
+                        "description": "Position for resume draft",
+                        "name": "resume_request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.GenerateResumeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Generated resume draft",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.GeneratedResumeResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid input data",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to generate resume draft",
+                        "schema": {
+                            "$ref": "#/definitions/jumyste-app-backend_internal_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/resume/candidates": {
             "get": {
                 "security": [
@@ -2641,6 +2698,34 @@ const docTemplate = `{
                 }
             }
         },
+        "jumyste-app-backend_internal_dto.GenerateResumeRequest": {
+            "type": "object",
+            "required": [
+                "position"
+            ],
+            "properties": {
+                "position": {
+                    "type": "string"
+                }
+            }
+        },
+        "jumyste-app-backend_internal_dto.GeneratedResumeResponse": {
+            "type": "object",
+            "properties": {
+                "about": {
+                    "type": "string"
+                },
+                "skills": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "work_experience": {
+                    "$ref": "#/definitions/jumyste-app-backend_internal_dto.WorkExperienceResponse"
+                }
+            }
+        },
         "jumyste-app-backend_internal_dto.JobAppStatusAnalytics": {
             "type": "object",
             "properties": {
@@ -3108,9 +3193,6 @@ const docTemplate = `{
         "jumyste-app-backend_internal_dto.WorkExperienceResponse": {
             "type": "object",
             "properties": {
-                "city": {
-                    "type": "string"
-                },
                 "company_name": {
                     "type": "string"
                 },
@@ -3121,6 +3203,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "end_date": {
+                    "type": "string"
+                },
+                "location": {
                     "type": "string"
                 },
                 "position": {
