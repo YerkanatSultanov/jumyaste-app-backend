@@ -107,7 +107,6 @@ func (s *ResumeService) SaveResume(ctx context.Context, resume entity.Resume) er
 }
 
 func (s *ResumeService) CreateResumeFromRequest(ctx context.Context, userID int, req dto.ResumeRequest) error {
-
 	exists, err := s.CheckIfResumeExists(ctx, userID)
 	if err != nil {
 		logger.Log.Error("Failed to check if resume exists", "error", err)
@@ -118,6 +117,19 @@ func (s *ResumeService) CreateResumeFromRequest(ctx context.Context, userID int,
 		return fmt.Errorf("resume already exists for user with ID %d", userID)
 	}
 
+	var experiences []entity.WorkExperience
+	for _, exp := range req.WorkExperiences {
+		experiences = append(experiences, entity.WorkExperience{
+			CompanyName:    exp.CompanyName,
+			Position:       exp.Position,
+			StartDate:      exp.StartDate,
+			EndDate:        exp.EndDate,
+			Location:       exp.Location,
+			EmploymentType: exp.EmploymentType,
+			Description:    exp.Description,
+		})
+	}
+
 	resume := entity.Resume{
 		UserID:          userID,
 		FullName:        req.FullName,
@@ -125,6 +137,7 @@ func (s *ResumeService) CreateResumeFromRequest(ctx context.Context, userID int,
 		Skills:          req.Skills,
 		City:            req.City,
 		About:           req.About,
+		Experiences:     experiences,
 	}
 
 	if err := s.ResumeRepository.CreateResume(ctx, &resume); err != nil {

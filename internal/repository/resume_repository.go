@@ -28,6 +28,7 @@ func (r *ResumeRepository) CreateResume(ctx context.Context, resume *entity.Resu
 		return err
 	}
 
+	// Сохраняем сам резюме
 	query := `
 		INSERT INTO resume (user_id, full_name, desired_position, skills, city, about, parsed_data)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -44,7 +45,31 @@ func (r *ResumeRepository) CreateResume(ctx context.Context, resume *entity.Resu
 		parsedDataJSON,
 	).Scan(&resume.ID)
 
-	return err
+	if err != nil {
+		return err
+	}
+
+	for _, exp := range resume.Experiences {
+		expQuery := `
+			INSERT INTO work_experience (resume_id, company_name, position, start_date, end_date, location, employment_type, description)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		`
+		_, err := r.DB.ExecContext(ctx, expQuery,
+			resume.ID,
+			exp.CompanyName,
+			exp.Position,
+			exp.StartDate,
+			exp.EndDate,
+			exp.Location,
+			exp.EmploymentType,
+			exp.Description,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (r *ResumeRepository) GetResumeByUserID(ctx context.Context, userID int) (*entity.Resume, *entity.User, error) {
