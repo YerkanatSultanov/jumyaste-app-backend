@@ -2910,6 +2910,12 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                },
+                "work_experiences": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/jumyste-app-backend_internal_dto.WorkExperienceRequest"
+                    }
                 }
             }
         },
@@ -2937,6 +2943,12 @@ const docTemplate = `{
                 },
                 "user": {
                     "$ref": "#/definitions/jumyste-app-backend_internal_dto.UserResponse"
+                },
+                "work_experiences": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/jumyste-app-backend_internal_dto.WorkExperienceResponse"
+                    }
                 }
             }
         },
@@ -3058,6 +3070,63 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "work_format": {
+                    "type": "string"
+                }
+            }
+        },
+        "jumyste-app-backend_internal_dto.WorkExperienceRequest": {
+            "type": "object",
+            "required": [
+                "company_name",
+                "position",
+                "start_date"
+            ],
+            "properties": {
+                "company_name": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "employment_type": {
+                    "type": "string"
+                },
+                "end_date": {
+                    "type": "string"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "position": {
+                    "type": "string"
+                },
+                "start_date": {
+                    "type": "string"
+                }
+            }
+        },
+        "jumyste-app-backend_internal_dto.WorkExperienceResponse": {
+            "type": "object",
+            "properties": {
+                "city": {
+                    "type": "string"
+                },
+                "company_name": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "employment_type": {
+                    "type": "string"
+                },
+                "end_date": {
+                    "type": "string"
+                },
+                "position": {
+                    "type": "string"
+                },
+                "start_date": {
                     "type": "string"
                 }
             }
@@ -3251,6 +3320,12 @@ const docTemplate = `{
                 "desired_position": {
                     "type": "string"
                 },
+                "experiences": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/jumyste-app-backend_internal_entity.WorkExperience"
+                    }
+                },
                 "full_name": {
                     "type": "string"
                 },
@@ -3385,6 +3460,32 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "work_format": {
+                    "type": "string"
+                }
+            }
+        },
+        "jumyste-app-backend_internal_entity.WorkExperience": {
+            "type": "object",
+            "properties": {
+                "company_name": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "employment_type": {
+                    "type": "string"
+                },
+                "end_date": {
+                    "type": "string"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "position": {
+                    "type": "string"
+                },
+                "start_date": {
                     "type": "string"
                 }
             }

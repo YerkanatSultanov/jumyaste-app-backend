@@ -264,6 +264,10 @@ definitions:
         items:
           type: string
         type: array
+      work_experiences:
+        items:
+          $ref: '#/definitions/jumyste-app-backend_internal_dto.WorkExperienceRequest'
+        type: array
     required:
     - desired_position
     - full_name
@@ -286,6 +290,10 @@ definitions:
         type: array
       user:
         $ref: '#/definitions/jumyste-app-backend_internal_dto.UserResponse'
+      work_experiences:
+        items:
+          $ref: '#/definitions/jumyste-app-backend_internal_dto.WorkExperienceResponse'
+        type: array
     type: object
   jumyste-app-backend_internal_dto.SuccessResponse:
     properties:
@@ -368,6 +376,44 @@ definitions:
       title:
         type: string
       work_format:
+        type: string
+    type: object
+  jumyste-app-backend_internal_dto.WorkExperienceRequest:
+    properties:
+      company_name:
+        type: string
+      description:
+        type: string
+      employment_type:
+        type: string
+      end_date:
+        type: string
+      location:
+        type: string
+      position:
+        type: string
+      start_date:
+        type: string
+    required:
+    - company_name
+    - position
+    - start_date
+    type: object
+  jumyste-app-backend_internal_dto.WorkExperienceResponse:
+    properties:
+      city:
+        type: string
+      company_name:
+        type: string
+      description:
+        type: string
+      employment_type:
+        type: string
+      end_date:
+        type: string
+      position:
+        type: string
+      start_date:
         type: string
     type: object
   jumyste-app-backend_internal_entity.Chat:
@@ -497,6 +543,10 @@ definitions:
         type: string
       desired_position:
         type: string
+      experiences:
+        items:
+          $ref: '#/definitions/jumyste-app-backend_internal_entity.WorkExperience'
+        type: array
       full_name:
         type: string
       id:
@@ -586,6 +636,23 @@ definitions:
       title:
         type: string
       work_format:
+        type: string
+    type: object
+  jumyste-app-backend_internal_entity.WorkExperience:
+    properties:
+      company_name:
+        type: string
+      description:
+        type: string
+      employment_type:
+        type: string
+      end_date:
+        type: string
+      location:
+        type: string
+      position:
+        type: string
+      start_date:
         type: string
     type: object
 info:
