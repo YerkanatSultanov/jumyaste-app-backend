@@ -28,7 +28,6 @@ func (r *ResumeRepository) CreateResume(ctx context.Context, resume *entity.Resu
 		return err
 	}
 
-	// Сохраняем сам резюме
 	query := `
 		INSERT INTO resume (user_id, full_name, desired_position, skills, city, about, parsed_data)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -122,6 +121,13 @@ func (r *ResumeRepository) GetResumeByUserID(ctx context.Context, userID int) (*
 		}
 	}
 
+	workExp, err := r.GetWorkExperienceByResumeID(ctx, resume.ID)
+	if err != nil {
+		logger.Log.Error("Failed to get work experience", "error", err)
+		return nil, nil, err
+	}
+	resume.Experiences = workExp
+
 	return &resume, &user, nil
 }
 
@@ -133,6 +139,46 @@ func (r *ResumeRepository) DeleteResumeByUserID(ctx context.Context, userID int)
 		return err
 	}
 	return nil
+}
+
+func (r *ResumeRepository) GetWorkExperienceByResumeID(ctx context.Context, resumeID int) ([]entity.WorkExperience, error) {
+	query := `
+		SELECT company_name, position, start_date, end_date, location, employment_type, description
+		FROM work_experience
+		WHERE resume_id = $1
+		ORDER BY start_date DESC
+	`
+
+	rows, err := r.DB.QueryContext(ctx, query, resumeID)
+	if err != nil {
+		logger.Log.Error("Failed to query work experience", "error", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var experiences []entity.WorkExperience
+	for rows.Next() {
+		var exp entity.WorkExperience
+		if err := rows.Scan(
+			&exp.CompanyName,
+			&exp.Position,
+			&exp.StartDate,
+			&exp.EndDate,
+			&exp.Location,
+			&exp.EmploymentType,
+			&exp.Description,
+		); err != nil {
+			logger.Log.Error("Failed to scan work experience row", "error", err)
+			return nil, err
+		}
+		experiences = append(experiences, exp)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return experiences, nil
 }
 
 func (r *ResumeRepository) GetByUserID(ctx context.Context, userId int) (*entity.Resume, error) {

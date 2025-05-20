@@ -150,6 +150,19 @@ func (h *ResumeHandler) GetResumeByUserID(c *gin.Context) {
 		return
 	}
 
+	var workExps []dto.WorkExperienceResponse
+	for _, exp := range resume.Experiences {
+		workExps = append(workExps, dto.WorkExperienceResponse{
+			CompanyName:    exp.CompanyName,
+			Position:       exp.Position,
+			StartDate:      exp.StartDate,
+			EndDate:        exp.EndDate,
+			Location:       exp.Location,
+			EmploymentType: exp.EmploymentType,
+			Description:    exp.Description,
+		})
+	}
+
 	c.JSON(http.StatusOK, dto.ResumeResponse{
 		FullName:        resume.FullName,
 		DesiredPosition: resume.DesiredPosition,
@@ -165,6 +178,7 @@ func (h *ResumeHandler) GetResumeByUserID(c *gin.Context) {
 			ProfilePicture: user.ProfilePicture,
 			RoleID:         user.RoleId,
 		},
+		WorkExperiences: workExps,
 	})
 }
 

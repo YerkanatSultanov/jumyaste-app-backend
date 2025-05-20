@@ -33,7 +33,7 @@ type WorkExperienceResponse struct {
 	Position       string `json:"position"`
 	StartDate      string `json:"start_date"`
 	EndDate        string `json:"end_date"`
-	City           string `json:"city"`
+	Location       string `json:"location"`
 	EmploymentType string `json:"employment_type"`
 	Description    string `json:"description"`
 }
