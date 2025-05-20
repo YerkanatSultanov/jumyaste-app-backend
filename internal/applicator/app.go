@@ -92,7 +92,7 @@ func NewApp(authMiddleware *middleware.AuthMiddleware) *App {
 	invitationHandler := handler.NewInvitationHandler(invitationService)
 	chatHandler := handler.NewChatHandler(chatService)
 	messageHandler := handler.NewMessageHandler(messageService, wsManager)
-	resumeHandler := handler.NewResumeHandler(resumeService)
+	resumeHandler := handler.NewResumeHandler(resumeService, aiClient)
 	wsHandler := handler.NewWebSocketHandler(wsManager, authMiddleware)
 	jobAppHandler := handler.NewJobApplicationHandler(jobAppService, resumeService)
 	departmentHandler := handler.NewDepartmentsHandler(departmentService)

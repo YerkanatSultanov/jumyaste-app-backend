@@ -98,6 +98,7 @@ func SetupRouter(
 		resume.GET("/:user_id", resumeHandler.GetResumeByUserID)
 		resume.DELETE("/", resumeHandler.DeleteResumeByUserID)
 		resume.GET("/candidates", resumeHandler.FilterCandidates)
+		resume.POST("/ai-generate", resumeHandler.GenerateResumeDraft)
 	}
 
 	// --- Приглашения ---

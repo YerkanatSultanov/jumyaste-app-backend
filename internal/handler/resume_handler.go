@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"jumyste-app-backend/internal/ai"
 	"jumyste-app-backend/internal/dto"
 	_ "jumyste-app-backend/internal/entity"
 	"net/http"
@@ -13,10 +14,42 @@ import (
 
 type ResumeHandler struct {
 	ResumeService *service.ResumeService
+	OpenAIClient  *ai.OpenAIClient
 }
 
-func NewResumeHandler(resumeService *service.ResumeService) *ResumeHandler {
-	return &ResumeHandler{ResumeService: resumeService}
+func NewResumeHandler(resumeService *service.ResumeService, openAIClient *ai.OpenAIClient) *ResumeHandler {
+	return &ResumeHandler{ResumeService: resumeService, OpenAIClient: openAIClient}
+}
+
+// GenerateResumeDraft godoc
+// @Summary Generate a draft resume based on position and city
+// @Description Generate a draft resume using AI, providing position and city as input
+// @Tags Resume
+// @Accept json
+// @Produce json
+// @Param resume_request body dto.GenerateResumeRequest true "Position for resume draft"
+// @Security BearerAuth
+// @Success 200 {object} dto.GeneratedResumeResponse "Generated resume draft"
+// @Failure 400 {object} dto.ErrorResponse "Invalid input data"
+// @Failure 401 {object} dto.ErrorResponse "Unauthorized"
+// @Failure 500 {object} dto.ErrorResponse "Failed to generate resume draft"
+// @Router /resume/ai-generate [post]
+func (h *ResumeHandler) GenerateResumeDraft(c *gin.Context) {
+	var req dto.GenerateResumeRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		logger.Log.Error("Failed to bind JSON", "error", err)
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: "Invalid input data"})
+		return
+	}
+
+	result, err := h.OpenAIClient.GenerateResumeFromAI(req)
+	if err != nil {
+		logger.Log.Error("Failed to generate resume draft", "error", err)
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: "Failed to generate resume draft"})
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
 }
 
 // UploadResume godoc

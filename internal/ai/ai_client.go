@@ -7,6 +7,7 @@ import (
 	"io"
 	"jumyste-app-backend/internal/dto"
 	"jumyste-app-backend/pkg/helper"
+	"jumyste-app-backend/pkg/logger"
 	"log"
 	"net/http"
 	"os"
@@ -294,4 +295,90 @@ func (c *OpenAIClient) GetMatchingScore(resumeText string, vacancyDescription st
 	}
 
 	return result, nil
+}
+
+func (c *OpenAIClient) GenerateResumeFromAI(input dto.GenerateResumeRequest) (*dto.GeneratedResumeResponse, error) {
+	prompt := fmt.Sprintf(`
+Ты помощник по карьерному развитию. На основе должности "%s" сгенерируй пример:
+
+1. Краткого раздела "О себе" — 3–4 предложения.
+2. Массив из 5–8 ключевых навыков (skills).
+3. Пример одного опыта работы в следующей JSON-структуре:
+4. Название компании должен быть Example, чтобы человек смог сам изменить название и описание опыта работы
+
+Ответ ДОЛЖЕН НАЧИНАТЬСЯ строго с символа { и быть ВАЛИДНЫМ JSON со следующими полями:
+
+{
+  "about": "string",
+  "skills": ["string", ...],
+  "work_experience": {
+    "company_name": "string",
+    "position": "string",
+    "start_date": "string",
+    "end_date": "string",
+    "location": "string",
+    "employment_type": "string",
+    "description": "string"
+  }
+}
+
+Без дополнительных комментариев и без других полей.
+
+`, input.Position)
+
+	requestBody, err := json.Marshal(OpenAIRequest{
+		Model: "gpt-4o-mini",
+		Messages: []Message{
+			{Role: "system", Content: "Ты AI, генерирующий резюме для соискателей."},
+			{Role: "user", Content: prompt},
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode request: %w", err)
+	}
+
+	req, err := http.NewRequest("POST", "https://api.openai.com/v1/chat/completions", bytes.NewBuffer(requestBody))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+c.APIKey)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	var openAIResp OpenAIResponse
+	if err := json.Unmarshal(body, &openAIResp); err != nil {
+		logger.Log.Error("Failed to parse OpenAI response", "body", string(body), "error", err)
+		return nil, fmt.Errorf("failed to parse AI response: %w", err)
+	}
+	if len(openAIResp.Choices) == 0 {
+		return nil, fmt.Errorf("no response from AI")
+	}
+
+	content := strings.TrimSpace(openAIResp.Choices[0].Message.Content)
+	logger.Log.Info("AI content", "content", content)
+
+	jsonStr := helper.ExtractJSONFromOpenAI(content)
+	if jsonStr == "" {
+		logger.Log.Error("Failed to extract JSON from content", "content", content)
+		return nil, fmt.Errorf("failed to extract JSON from response")
+	}
+	logger.Log.Info("Extracted JSON", "json", jsonStr)
+
+	var result dto.GeneratedResumeResponse
+	if err := json.Unmarshal([]byte(jsonStr), &result); err != nil {
+		logger.Log.Error("Failed to unmarshal structured resume", "json", jsonStr, "error", err)
+		return nil, fmt.Errorf("failed to parse structured resume: %w", err)
+	}
+
+	return &result, nil
 }

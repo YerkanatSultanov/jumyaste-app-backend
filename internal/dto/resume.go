@@ -48,3 +48,13 @@ type ResumeResponse struct {
 	User            UserResponse             `json:"user"`
 	WorkExperiences []WorkExperienceResponse `json:"work_experiences"`
 }
+
+type GenerateResumeRequest struct {
+	Position string `json:"position" binding:"required"`
+}
+
+type GeneratedResumeResponse struct {
+	About          string                 `json:"about"`
+	Skills         []string               `json:"skills"`
+	WorkExperience WorkExperienceResponse `json:"work_experience"`
+}
