@@ -72,3 +72,19 @@ func (s *ChatService) GetChatsByUserID(userID int) ([]entity.Chat, error) {
 	logger.Log.Info("Successfully fetched user chats", slog.Int("user_id", userID), slog.Int("chat_count", len(chats)))
 	return chats, nil
 }
+
+//func (s *ChatService) GetOrCreateChatBetweenUsers(userID1, userID2 int) (*entity.Chat, error) {
+//	if userID1 == userID2 {
+//		return nil, errors.New("cannot create chat with yourself")
+//	}
+//
+//	chat, err := s.ChatRepo.GetChatBetweenUsers(userID1, userID2)
+//	if err != nil {
+//		return nil, err
+//	}
+//	if chat != nil {
+//		return chat, nil
+//	}
+//
+//	return s.CreateChat(userID1, userID2)
+//}

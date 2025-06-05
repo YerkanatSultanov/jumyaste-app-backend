@@ -10,6 +10,7 @@ import (
 	"jumyste-app-backend/internal/repository"
 	"jumyste-app-backend/pkg/logger"
 	"strings"
+	"time"
 )
 
 type JobApplicationService struct {
@@ -17,16 +18,24 @@ type JobApplicationService struct {
 	ResumeRepo         *repository.ResumeRepository
 	VacancyRepo        *repository.VacancyRepository
 	AIClient           *ai.OpenAIClient
+	ChatRepo           *repository.ChatRepository
+	MessageRepo        *repository.MessageRepository
 }
 
 func NewJobApplicationService(repo *repository.JobApplicationRepository,
 	resumeRepo *repository.ResumeRepository,
 	vacancyRepo *repository.VacancyRepository,
-	aiClient *ai.OpenAIClient) *JobApplicationService {
+	aiClient *ai.OpenAIClient,
+	chatRepo *repository.ChatRepository,
+	messageRepo *repository.MessageRepository,
+) *JobApplicationService {
 	return &JobApplicationService{JobApplicationRepo: repo,
 		ResumeRepo:  resumeRepo,
 		VacancyRepo: vacancyRepo,
-		AIClient:    aiClient}
+		AIClient:    aiClient,
+		ChatRepo:    chatRepo,
+		MessageRepo: messageRepo,
+	}
 }
 
 func (s *JobApplicationService) ApplyForJob(
@@ -35,6 +44,7 @@ func (s *JobApplicationService) ApplyForJob(
 	firstName, lastName, email string,
 	resumeID int,
 ) (*entity.JobApplication, error) {
+	// Получаем резюме пользователя
 	resume, err := s.ResumeRepo.GetByUserID(ctx, userID)
 	if err != nil {
 		logger.Log.Error("Failed to get resume", "user_id", userID, "error", err)
@@ -45,6 +55,7 @@ func (s *JobApplicationService) ApplyForJob(
 		return nil, errors.New("resume not found")
 	}
 
+	// Получаем вакансию
 	vacancy, err := s.VacancyRepo.GetVacancyById(vacancyID)
 	if err != nil {
 		logger.Log.Error("Failed to get vacancy", "vacancy_id", vacancyID, "error", err)
@@ -97,6 +108,48 @@ func (s *JobApplicationService) ApplyForJob(
 	if err != nil {
 		logger.Log.Error("Failed to save application", "error", err)
 		return nil, err
+	}
+
+	chat, err := s.ChatRepo.GetChatBetweenUsers(userID, vacancy.CreatedBy)
+	if err != nil {
+		logger.Log.Error("Failed to get chat between users", "user_id", userID, "hr_id", vacancy.CreatedBy, "error", err)
+	}
+
+	if chat == nil {
+		newChat := &entity.Chat{
+			Users: []entity.UserResponse{
+				{ID: userID},
+				{ID: vacancy.CreatedBy},
+			},
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		}
+		chatID, err := s.ChatRepo.CreateChat(newChat)
+		if err != nil {
+			logger.Log.Error("Failed to create chat", "error", err)
+		} else {
+			chat = &entity.Chat{
+				ID:        chatID,
+				Users:     newChat.Users,
+				CreatedAt: newChat.CreatedAt,
+				UpdatedAt: newChat.UpdatedAt,
+			}
+		}
+	}
+
+	if chat != nil {
+		welcomeMessageContent := "Здравствуйте! Я откликнулся на вакансию \"" + vacancy.Title + "\"."
+		message := &entity.Message{
+			ChatID:   chat.ID,
+			SenderID: userID,
+			Type:     "text",
+			Content:  &welcomeMessageContent,
+		}
+
+		_, err = s.MessageRepo.CreateMessage(message)
+		if err != nil {
+			logger.Log.Error("Failed to send first message", "chat_id", chat.ID, "error", err)
+		}
 	}
 
 	return application, nil

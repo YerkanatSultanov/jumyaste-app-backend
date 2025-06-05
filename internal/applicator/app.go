@@ -77,7 +77,7 @@ func NewApp(authMiddleware *middleware.AuthMiddleware) *App {
 	chatService := service.NewChatService(chatRepo)
 	messageService := service.NewMessageService(messageRepo)
 	resumeService := service.NewResumeService(aiClient, resumeRepo)
-	jobAppService := service.NewJobApplicationService(jobAppRepo, resumeRepo, vacancyRepo, aiClient)
+	jobAppService := service.NewJobApplicationService(jobAppRepo, resumeRepo, vacancyRepo, aiClient, chatRepo, messageRepo)
 	departmentService := service.NewDepartmentsService(departmentRepo)
 	companyService := service.NewCompanyService(companyRepo)
 

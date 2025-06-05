@@ -234,3 +234,33 @@ func (r *ChatRepository) GetUsersByChatID(chatID, userID int) ([]entity.UserResp
 
 	return users, nil
 }
+
+func (r *ChatRepository) GetChatBetweenUsers(userID1, userID2 int) (*entity.Chat, error) {
+	query := `
+		SELECT c.id, c.created_at, c.updated_at
+		FROM chats c
+		JOIN chat_users cu1 ON c.id = cu1.chat_id
+		JOIN chat_users cu2 ON c.id = cu2.chat_id
+		WHERE cu1.user_id = $1 AND cu2.user_id = $2
+		LIMIT 1
+	`
+
+	row := r.DB.QueryRow(query, userID1, userID2)
+
+	var chat entity.Chat
+	err := row.Scan(&chat.ID, &chat.CreatedAt, &chat.UpdatedAt)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	users, err := r.GetUsersByChatID(chat.ID, -1)
+	if err != nil {
+		return nil, err
+	}
+	chat.Users = users
+
+	return &chat, nil
+}
