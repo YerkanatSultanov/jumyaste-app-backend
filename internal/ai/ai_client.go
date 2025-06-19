@@ -146,7 +146,9 @@ func (c *OpenAIClient) GenerateVacancyDescription(input dto.VacancyInput) (strin
 - оформленным в HTML с использованием тегов <b>, <i>, <ul>, <li>, <p>, <h2> и других при необходимости,
 - с выделением ключевых разделов: «Обязанности», «Требования», «Мы предлагаем».
 
-Результат должен быть валидным HTML-блоком:
+Оберни весь HTML-блок в <div>...</div>.
+
+Результат должен быть валидным HTML-блоком, БЕЗ оформления как markdown-код (не использовать \x60\x60\x60html).
 - Каждую информацию представь в соответствующем блоке: заголовок в <h2>, текстовые блоки в <p>,
 - Используй <ul> и <li> для списка обязанностей, требований и предложений,
 - Обязательно разделяй разделы с помощью <h2> для заголовков,
@@ -200,6 +202,12 @@ func (c *OpenAIClient) GenerateVacancyDescription(input dto.VacancyInput) (strin
 	}
 
 	description := strings.TrimSpace(openAIResp.Choices[0].Message.Content)
+
+	if strings.HasPrefix(description, "```html") && strings.HasSuffix(description, "```") {
+		description = strings.TrimPrefix(description, "```html")
+		description = strings.TrimSuffix(description, "```")
+		description = strings.TrimSpace(description)
+	}
 	return description, nil
 }
 
